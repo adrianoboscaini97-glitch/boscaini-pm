@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PManager — Boscaini</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/it.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#080808;--bg2:#101010;--bg3:#171717;--bg4:#1f1f1f;--bg5:#272727;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--border3:rgba(255,255,255,0.22);
+  --text:#efefef;--text2:#aaa;--text3:#666;--text4:#3a3a3a;
+  --r:10px;--r2:6px;--r3:4px;
+  --ad:#e8ff47;--ad2:rgba(232,255,71,0.1);--ad3:rgba(232,255,71,0.05);
+  --mkt:#ff7c5c;--mkt2:rgba(255,124,92,0.12);--mkt3:rgba(255,124,92,0.05);
+  --rnd:#5ab4ff;--rnd2:rgba(90,180,255,0.12);--rnd3:rgba(90,180,255,0.05);
+  --sic:#3fffc8;--sic2:rgba(63,255,200,0.12);--sic3:rgba(63,255,200,0.05);
+  --red:#ff5c5c;--red2:rgba(255,92,92,0.12);
+  --amber:#ffab40;--amber2:rgba(255,171,64,0.12);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;}
+.shell{display:flex;height:100vh;}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;}
+.login-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:36px;width:340px;text-align:center;}
+.login-logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;}
+.login-sub{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:28px;}
+.login-label{font-size:11px;color:var(--text3);text-align:left;display:block;margin-bottom:6px;letter-spacing:.3px;}
+.login-select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:10px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:16px;}
+.login-btn{width:100%;padding:11px;border-radius:var(--r2);border:none;background:var(--ad);color:#080808;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;}
+.login-btn:hover{background:#f0ff60;}
+
+/* SIDEBAR */
+.sidebar{width:230px;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.sidebar-logo{padding:18px 16px 12px;border-bottom:1px solid var(--border);}
+.logo-text{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.5px;}
+.logo-company{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px;letter-spacing:1px;text-transform:uppercase;}
+.user-chip{display:flex;align-items:center;gap:7px;padding:8px 10px;background:var(--bg3);border-radius:var(--r2);margin-top:8px;}
+.user-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.user-name{font-size:12px;font-weight:500;}
+.user-role{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
+
+.nav{padding:8px;flex:1;overflow-y:auto;}
+.nav-sep{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text4);padding:12px 8px 5px;font-weight:600;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r2);cursor:pointer;color:var(--text3);font-size:12.5px;transition:all .15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif;}
+.nav-item:hover{background:var(--bg4);color:var(--text2);}
+.nav-item.active{color:var(--text);background:var(--bg4);}
+.nav-item .ni{font-size:13px;width:16px;text-align:center;opacity:.7;}
+.nav-item .nbadge{margin-left:auto;font-size:10px;font-family:'DM Mono',monospace;background:var(--bg5);padding:1px 6px;border-radius:8px;color:var(--text3);}
+.ruolo-header{display:flex;align-items:center;gap:8px;padding:7px 10px 4px;}
+.ruolo-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sidebar-bottom{padding:10px 8px;border-top:1px solid var(--border);display:flex;gap:6px;}
+.date-chip{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);padding:6px 10px;background:var(--bg3);border-radius:var(--r2);flex:1;text-align:center;}
+
+/* MAIN */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.page-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;letter-spacing:-.4px;display:flex;align-items:center;gap:10px;}
+.topbar-right{display:flex;gap:7px;align-items:center;}
+
+/* PANELS */
+.panel{flex:1;overflow-y:auto;padding:22px;display:none;}
+.panel.active{display:block;}
+.panel::-webkit-scrollbar{width:4px;}
+.panel::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:2px;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--r2);border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;}
+.btn:hover{background:var(--bg4);color:var(--text);border-color:var(--border3);}
+.btn-accent{border-color:rgba(232,255,71,.3);color:var(--ad);background:var(--ad3);}
+.btn-accent:hover{background:var(--ad2);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-danger{color:var(--red);border-color:var(--red2);}
+.btn-danger:hover{background:var(--red2);}
+.btn-icon{width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--r3);}
+
+/* BRIEFING */
+.brief-greeting{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-1px;line-height:1.2;margin-bottom:4px;}
+.brief-date{font-size:13px;color:var(--text3);margin-bottom:22px;}
+.ruoli-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px;}
+.ruolo-card{border-radius:var(--r);padding:14px;border:1px solid var(--border);position:relative;overflow:hidden;background:var(--bg2);}
+.ruolo-card-bar{position:absolute;top:0;left:0;right:0;height:3px;}
+.ruolo-card-nome{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;}
+.ruolo-card-count{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.ruolo-card-lbl{font-size:11px;color:var(--text3);margin-top:3px;}
+.ruolo-card-alert{margin-top:8px;font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:var(--r3);display:inline-block;}
+.brief-ruolo-section{margin-bottom:22px;}
+.brief-ruolo-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.brief-ruolo-hd-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.brief-ruolo-hd-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.3px;}
+.brief-ruolo-hd-count{font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);}
+
+/* TASK CARD */
+.task-card{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:7px;transition:border-color .15s;position:relative;}
+.task-card:hover{border-color:var(--border2);}
+.task-card.done{opacity:.38;}
+.task-card.done .task-name{text-decoration:line-through;color:var(--text3);}
+.task-check{width:19px;height:19px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;cursor:pointer;transition:all .15s;font-size:10px;}
+.task-card.done .task-check{background:var(--sic);border-color:var(--sic);color:#080808;}
+.task-body{flex:1;min-width:0;}
+.task-name{font-size:13.5px;font-weight:500;margin-bottom:5px;line-height:1.4;}
+.task-desc{font-size:12px;color:var(--text3);margin-bottom:5px;line-height:1.5;}
+.task-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.tag{font-size:10.5px;font-family:'DM Mono',monospace;padding:2px 7px;border-radius:var(--r3);white-space:nowrap;}
+.tag-ruolo-ad{background:var(--ad3);color:var(--ad);}
+.tag-ruolo-mkt{background:var(--mkt3);color:var(--mkt);}
+.tag-ruolo-rnd{background:var(--rnd3);color:var(--rnd);}
+.tag-ruolo-sic{background:var(--sic3);color:var(--sic);}
+.tag-prio-critica{background:var(--red2);color:var(--red);}
+.tag-prio-alta{background:var(--amber2);color:var(--amber);}
+.tag-prio-media{background:var(--bg5);color:var(--text2);}
+.tag-prio-bassa{background:var(--bg4);color:var(--text3);}
+.tag-dead-scaduto{color:var(--red);}
+.tag-dead-oggi{color:var(--amber);}
+.tag-dead-presto{color:var(--rnd);}
+.tag-dead-ok{color:var(--text3);}
+.task-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;flex-shrink:0;}
+.task-card:hover .task-actions{opacity:1;}
+
+/* COMMENTI */
+.commenti-box{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:none;}
+.task-card:hover .commenti-box{display:block;}
+.commento{background:var(--bg3);border-radius:var(--r3);padding:7px 10px;margin-bottom:5px;font-size:12px;}
+.commento-autore{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:3px;}
+.commento-input-row{display:flex;gap:6px;margin-top:6px;}
+.commento-input{flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r3);padding:6px 9px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+.commento-input::placeholder{color:var(--text4);}
+.commento-input:focus{border-color:rgba(232,255,71,.3);}
+
+/* PROJ CARD */
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:11px;}
+.proj-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:15px;transition:border-color .15s;position:relative;overflow:hidden;}
+.proj-card:hover{border-color:var(--border2);}
+.proj-top-bar{position:absolute;top:0;left:0;right:0;height:3px;}
+.proj-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px;}
+.proj-desc{font-size:12px;color:var(--text3);margin-bottom:11px;line-height:1.5;}
+.proj-mini-stats{display:flex;gap:14px;margin-bottom:10px;}
+.proj-ms-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;}
+.proj-ms-lbl{font-size:10px;color:var(--text3);}
+.proj-bar{height:3px;background:var(--bg5);border-radius:2px;margin-bottom:9px;}
+.proj-bar-fill{height:100%;border-radius:2px;transition:width .4s;}
+.proj-foot{display:flex;align-items:center;justify-content:space-between;}
+
+/* FORMS */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);width:100%;max-width:540px;max-height:88vh;overflow-y:auto;}
+.modal::-webkit-scrollbar{width:3px;}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.modal-body{padding:18px;}
+.modal-ft{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:7px;}
+.fl{margin-bottom:13px;}
+.fl label{font-size:11px;color:var(--text3);display:block;margin-bottom:5px;letter-spacing:.3px;font-weight:500;}
+.fi,.fs,.ft{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s;}
+.fi:focus,.fs:focus,.ft:focus{border-color:rgba(232,255,71,.35);}
+.fi::placeholder,.ft::placeholder{color:var(--text4);}
+.ft{resize:vertical;min-height:65px;line-height:1.5;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.fg2 .fl,.fg3 .fl{margin:0;}
+
+/* LOG */
+.log-entry{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;margin-bottom:9px;}
+.log-date{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--text3);margin-bottom:5px;}
+.log-text{font-size:13.5px;line-height:1.7;color:var(--text2);}
+
+/* MISC */
+.sh{display:flex;align-items:center;gap:8px;margin-bottom:11px;margin-top:6px;}
+.sh-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
+.sh-line{flex:1;height:1px;background:var(--border);}
+.empty{text-align:center;padding:40px 20px;color:var(--text3);}
+.empty-icon{font-size:28px;margin-bottom:8px;}
+.empty-t{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text2);margin-bottom:5px;}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.fbtn{padding:5px 11px;border-radius:var(--r3);border:1px solid var(--border2);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
+.fbtn:hover,.fbtn.on{background:var(--bg4);color:var(--text2);border-color:var(--border3);}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:10px 16px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--ad);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important;}
+/* Flatpickr custom styles */
+.flatpickr-calendar { font-family: 'DM Sans', sans-serif !important; background: var(--bg3) !important; border: 1px solid var(--border2) !important; border-radius: var(--r) !important; box-shadow: 0 8px 32px rgba(0,0,0,.4) !important; }
+.flatpickr-day { color: var(--text2) !important; border-radius: var(--r3) !important; }
+.flatpickr-day:hover { background: var(--bg4) !important; border-color: transparent !important; color: var(--text) !important; }
+.flatpickr-day.selected { background: var(--ad) !important; border-color: var(--ad) !important; color: #080808 !important; font-weight: 600 !important; }
+.flatpickr-day.today { border-color: var(--ad) !important; color: var(--ad) !important; }
+.flatpickr-months { background: var(--bg3) !important; border-radius: var(--r) var(--r) 0 0 !important; }
+.flatpickr-month { color: var(--text) !important; }
+.flatpickr-current-month { color: var(--text) !important; font-family: 'Syne', sans-serif !important; font-weight: 700 !important; }
+.flatpickr-current-month select, .flatpickr-current-month input { color: var(--text) !important; background: transparent !important; }
+.flatpickr-weekday { color: var(--text3) !important; font-size: 11px !important; }
+.flatpickr-prev-month svg, .flatpickr-next-month svg { fill: var(--text2) !important; }
+.flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg { fill: var(--ad) !important; }
+.numInputWrapper:hover { background: var(--bg4) !important; }
+.fi[readonly] { cursor: pointer !important; }
+.voice-btn{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:var(--r);border:1px dashed var(--border2);background:transparent;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;width:100%;margin-bottom:10px;}
+.voice-btn:hover{border-color:var(--sic);color:var(--sic);background:var(--sic3);}
+.voice-btn.recording{border-color:var(--red);color:var(--red);background:var(--red2);animation:rpulse 1s infinite;}
+@keyframes rpulse{0%,100%{opacity:1}50%{opacity:.55}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">PManager</div>
+    <div class="login-sub">Boscaini — Chi sei?</div>
+    <label class="login-label">Seleziona il tuo profilo</label>
+    <select class="login-select" id="loginSelect">
+      <option value="">— Scegli —</option>
+      <option value="adriano|admin">Adriano (Admin)</option>
+      <option value="smm|smm">Social Media Manager</option>
+      <option value="grafico|grafico">Grafico</option>
+    </select>
+    <button class="login-btn" onclick="doLogin()">Accedi</button>
+  </div>
+</div>
+
+<div class="shell" id="appShell" style="display:none">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text">PManager</div>
+    <div class="logo-company">Boscaini</div>
+    <div class="user-chip" id="userChip">
+      <div class="user-dot" id="userDot"></div>
+      <div><div class="user-name" id="userName"></div><div class="user-role" id="userRoleLabel"></div></div>
+    </div>
+  </div>
+  <div class="nav">
+    <div class="nav-sep">Principale</div>
+    <button class="nav-item active" onclick="sp('briefing')" id="nav-briefing"><span class="ni">☀</span> Briefing</button>
+    <button class="nav-item admin-only" onclick="sp('progetti')" id="nav-progetti"><span class="ni">◈</span> Tutti i Progetti <span class="nbadge" id="nb-proj">0</span></button>
+    <button class="nav-item" onclick="sp('tasks')" id="nav-tasks"><span class="ni">✦</span> I miei Task <span class="nbadge" id="nb-task">0</span></button>
+    <button class="nav-item admin-only" onclick="sp('scadenze')" id="nav-scadenze"><span class="ni">⚡</span> In scadenza <span class="nbadge" id="nb-scad">0</span></button>
+
+    <div class="nav-sep admin-only" style="margin-top:6px">Per ruolo</div>
+    <div class="admin-only">
+      <div class="ruolo-header"><div class="ruolo-dot" style="background:var(--ad)"></div><span style="font-size:11px;color:var(--ad);font-weight:600;font-family:'DM Mono',monospace">AD + MKT</span></div>
+      <button class="nav-item" onclick="sp('ruolo-ad')" id="nav-ruolo-ad"><span class="ni" style="color:var(--ad)">◉</span> Progetti AD <span class="nbadge" id="nb-ad">0</span></button>
+      <div class="ruolo-header" style="margin-top:4px"><div class="ruolo-dot" style="background:var(--mkt)"></div><span style="font-size:11px;color:var(--mkt);font-weight:600;font-family:'DM Mono',monospace">MKT MANAGER</span></div>
+      <button class="nav-item" onclick="sp('ruolo-mkt')" id="nav-ruolo-mkt"><span class="ni" style="color:var(--mkt)">◉</span> Progetti Mktg <span class="nbadge" id="nb-mkt">0</span></button>
+      <div class="ruolo-header" style="margin-top:4px"><div class="ruolo-dot" style="background:var(--rnd)"></div><span style="font-size:11px;color:var(--rnd);font-weight:600;font-family:'DM Mono',monospace">R&D MANAGER</span></div>
+      <button class="nav-item" onclick="sp('ruolo-rnd')" id="nav-ruolo-rnd"><span class="ni" style="color:var(--rnd)">◉</span> Progetti R&D <span class="nbadge" id="nb-rnd">0</span></button>
+      <div class="ruolo-header" style="margin-top:4px"><div class="ruolo-dot" style="background:var(--sic)"></div><span style="font-size:11px;color:var(--sic);font-weight:600;font-family:'DM Mono',monospace">PROG. SICUREZZA</span></div>
+      <button class="nav-item" onclick="sp('ruolo-sic')" id="nav-ruolo-sic"><span class="ni" style="color:var(--sic)">◉</span> Proj. Sicurezza <span class="nbadge" id="nb-sic">0</span></button>
+    </div>
+
+    <div class="nav-sep" style="margin-top:6px">Altro</div>
+    <button class="nav-item" onclick="sp('log')" id="nav-log"><span class="ni">◎</span> Diario</button>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="date-chip" id="sideDate"></div>
+    <button class="btn btn-sm" onclick="doLogout()" title="Esci">↩</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">Briefing</div>
+    <div class="topbar-right" id="topbarActions">
+      <button class="btn btn-sm admin-only" onclick="openP()">+ Progetto</button>
+      <button class="btn btn-sm btn-accent admin-only" onclick="openT()">+ Task</button>
+      <div id="syncStatus" style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace"></div>
+      <button class="btn btn-sm" onclick="loadAll()" title="Aggiorna dati" style="padding:5px 10px;font-size:16px;">↻</button>
+      <button class="btn btn-sm btn-accent" onclick="esportaBO()" title="Esporta per BO">📋 Esporta BO</button>
+    </div>
+  </div>
+
+  <!-- BRIEFING -->
+  <div class="panel active" id="panel-briefing">
+    <div class="brief-greeting" id="greeting">Caricamento...</div>
+    <div class="brief-date" id="briefDate"></div>
+    <div class="ruoli-grid admin-only" id="ruoliGrid"></div>
+    <div id="briefSections"></div>
+  </div>
+
+  <!-- TUTTI PROGETTI (admin) -->
+  <div class="panel admin-only" id="panel-progetti">
+    <div class="filter-row" id="projFilters">
+      <button class="fbtn on" onclick="filterProj('',this)">Tutti</button>
+      <button class="fbtn" onclick="filterProj('ad',this)" style="color:var(--ad)">AD+Mkt</button>
+      <button class="fbtn" onclick="filterProj('mkt',this)" style="color:var(--mkt)">Mktg</button>
+      <button class="fbtn" onclick="filterProj('rnd',this)" style="color:var(--rnd)">R&D</button>
+      <button class="fbtn" onclick="filterProj('sic',this)" style="color:var(--sic)">Sicurezza</button>
+    </div>
+    <div class="proj-grid" id="projGrid"></div>
+  </div>
+
+  <!-- TASK -->
+  <div class="panel" id="panel-tasks">
+    <div class="filter-row" id="taskFilters">
+      <button class="fbtn on" onclick="filterTask('tutti',this)">Tutti</button>
+      <button class="fbtn" onclick="filterTask('aperti',this)">Aperti</button>
+      <button class="fbtn admin-only" onclick="filterTask('critica',this)" style="color:var(--red)">Critici</button>
+      <button class="fbtn admin-only" onclick="filterTask('alta',this)" style="color:var(--amber)">Alta</button>
+    </div>
+    <div id="taskList"></div>
+  </div>
+
+  <!-- SCADENZE (admin) -->
+  <div class="panel admin-only" id="panel-scadenze"><div id="scadList"></div></div>
+
+  <!-- RUOLI (admin) -->
+  <div class="panel admin-only" id="panel-ruolo-ad"><div class="proj-grid" id="proj-ad"></div><div style="margin-top:18px" id="tasks-ad"></div></div>
+  <div class="panel admin-only" id="panel-ruolo-mkt"><div class="proj-grid" id="proj-mkt"></div><div style="margin-top:18px" id="tasks-mkt"></div></div>
+  <div class="panel admin-only" id="panel-ruolo-rnd"><div class="proj-grid" id="proj-rnd"></div><div style="margin-top:18px" id="tasks-rnd"></div></div>
+  <div class="panel admin-only" id="panel-ruolo-sic"><div class="proj-grid" id="proj-sic"></div><div style="margin-top:18px" id="tasks-sic"></div></div>
+
+  <!-- LOG -->
+  <div class="panel" id="panel-log">
+    <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()"><span>🎙</span><span id="voiceBtnTxt">Registra nota vocale</span></button>
+    <div class="fl"><textarea class="ft" id="logInput" placeholder="Scrivi una nota per oggi..." style="min-height:85px"></textarea></div>
+    <div style="display:flex;gap:7px;margin-bottom:20px">
+      <button class="btn btn-sm btn-accent" onclick="saveLog()">Salva nota</button>
+      <button class="btn btn-sm" onclick="document.getElementById('logInput').value=''">Cancella</button>
+    </div>
+    <div class="sh"><span class="sh-label">Storico</span><span class="sh-line"></span></div>
+    <div id="logList"></div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL PROGETTO -->
+<div class="modal-ov hidden" id="mProj">
+<div class="modal">
+  <div class="modal-hd"><div class="modal-title" id="mProjTitle">Nuovo Progetto</div><button class="btn btn-sm" onclick="closeM('mProj')">✕</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="ep_id">
+    <div class="fl"><label>Nome progetto *</label><input class="fi" id="p_nome" placeholder="Nome del progetto"></div>
+    <div class="fl"><label>Descrizione</label><textarea class="ft" id="p_desc" placeholder="Obiettivo, contesto..."></textarea></div>
+    <div class="fg2">
+      <div class="fl"><label>Ruolo *</label><select class="fs" id="p_ruolo"><option value="ad">AD + Marketing</option><option value="mkt">Marketing Manager</option><option value="rnd">R&D Manager</option><option value="sic">Progetto Sicurezza</option></select></div>
+      <div class="fl"><label>Stato</label><select class="fs" id="p_stato"><option value="attivo">Attivo</option><option value="pianificazione">Pianificazione</option><option value="in-pausa">In pausa</option><option value="completato">Completato</option></select></div>
+    </div>
+    <div class="fg2">
+      <div class="fl"><label>Data inizio</label><input class="fi" type="text" id="p_inizio" placeholder="Seleziona data" readonly></div>
+      <div class="fl"><label>Deadline</label><input class="fi" type="text" id="p_dead" placeholder="Seleziona data" readonly></div>
+    </div>
+    <div class="fl"><label>Note / Risorse</label><textarea class="ft" id="p_note" placeholder="Link, riferimenti..."></textarea></div>
+  </div>
+  <div class="modal-ft"><button class="btn" onclick="closeM('mProj')">Annulla</button><button class="btn btn-accent" onclick="saveProj()">Salva</button></div>
+</div>
+</div>
+
+<!-- MODAL TASK -->
+<div class="modal-ov hidden" id="mTask">
+<div class="modal">
+  <div class="modal-hd"><div class="modal-title" id="mTaskTitle">Nuovo Task</div><button class="btn btn-sm" onclick="closeM('mTask')">✕</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="et_id">
+    <div class="fl"><label>Nome task *</label><input class="fi" id="t_nome" placeholder="Cosa deve essere fatto?"></div>
+    <div class="fl"><label>Descrizione / Note</label><textarea class="ft" id="t_desc" placeholder="Dettagli, link, riferimenti..."></textarea></div>
+    <div class="fg3">
+      <div class="fl"><label>Ruolo *</label><select class="fs" id="t_ruolo" onchange="updateProjSel()"><option value="ad">AD + Mkt</option><option value="mkt">Mktg</option><option value="rnd">R&D</option><option value="sic">Sicurezza</option></select></div>
+      <div class="fl"><label>Progetto</label><select class="fs" id="t_proj"></select></div>
+      <div class="fl"><label>Priorità</label><select class="fs" id="t_prio"><option value="critica">🔴 Critica</option><option value="alta">🟡 Alta</option><option value="media" selected>🔵 Media</option><option value="bassa">⚪ Bassa</option></select></div>
+    </div>
+    <div class="fg3">
+      <div class="fl"><label>Assegna a</label><select class="fs" id="t_assegna"><option value="tutti">Tutti</option><option value="adriano">Adriano</option><option value="smm">Social Media Manager</option><option value="grafico">Grafico</option></select></div>
+      <div class="fl"><label>Deadline</label><input class="fi" type="text" id="t_dead" placeholder="Seleziona data" readonly></div>
+      <div class="fl"><label>Tempo stimato</label><select class="fs" id="t_tempo"><option value="">—</option><option value="15min">15 min</option><option value="30min">30 min</option><option value="1h">1 ora</option><option value="2h">2 ore</option><option value="3h">3 ore</option><option value="½ giornata">½ giornata</option><option value="giornata">Giornata intera</option></select></div>
+    </div>
+  </div>
+  <div class="modal-ft"><button class="btn" onclick="closeM('mTask')">Annulla</button><button class="btn btn-accent" onclick="saveTask()">Salva</button></div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPA_URL = 'https://wdeoejbbuzwwmgcbutoa.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkZW9lamJidXp3d21nY2J1dG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyOTk5OTQsImV4cCI6MjA5NTg3NTk5NH0.ij_Jg1vOaLKF24gc71_NCQH-ugerMeYMjT_v94JuE4I';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+const RUOLI = {
+  ad:  {label:'AD + Marketing',     color:'var(--ad)',  tagCls:'tag-ruolo-ad',  emoji:'🏢'},
+  mkt: {label:'Marketing Manager',  color:'var(--mkt)', tagCls:'tag-ruolo-mkt', emoji:'📣'},
+  rnd: {label:'R&D Manager',        color:'var(--rnd)', tagCls:'tag-ruolo-rnd', emoji:'🔬'},
+  sic: {label:'Progetto Sicurezza', color:'var(--sic)', tagCls:'tag-ruolo-sic', emoji:'👟'}
+};
+const UTENTI = {
+  adriano:{label:'Adriano',              color:'var(--ad)'},
+  smm:    {label:'Social Media Manager', color:'var(--mkt)'},
+  grafico:{label:'Grafico',              color:'var(--rnd)'},
+  tutti:  {label:'Tutti',                color:'var(--text3)'}
+};
+
+let currentUser = null, currentRole = null;
+let P = [], T = [], L = [], C = [];
+let curTaskFilter = 'tutti', curProjFilter = '';
+
+const today = new Date(); today.setHours(0,0,0,0);
+const todayStr = today.toISOString().split('T')[0];
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function setSyncStatus(msg){document.getElementById('syncStatus').innerHTML=msg;}
+
+function ds(d){
+  if(!d)return null;
+  const dd=new Date(d);dd.setHours(0,0,0,0);
+  const diff=Math.round((dd-today)/86400000);
+  if(diff<0)  return{cls:'tag-dead-scaduto',lbl:'⚠ Scaduto',diff};
+  if(diff===0)return{cls:'tag-dead-oggi',   lbl:'📅 Oggi',diff};
+  if(diff<=3) return{cls:'tag-dead-presto', lbl:`📅 ${diff}gg`,diff};
+  return{cls:'tag-dead-ok',lbl:'📅 '+new Date(d).toLocaleDateString('it-IT',{day:'numeric',month:'short'}),diff};
+}
+
+// ── LOGIN ────────────────────────────────────────────────────────────────────
+function doLogin(){
+  const v=document.getElementById('loginSelect').value;
+  if(!v)return;
+  const [name,role]=v.split('|');
+  currentUser=name; currentRole=role;
+  localStorage.setItem('bpm_user',JSON.stringify({name,role}));
+  applyUser();
+}
+
+function doLogout(){
+  localStorage.removeItem('bpm_user');
+  currentUser=null;currentRole=null;
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('appShell').style.display='none';
+}
+
+function applyUser(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appShell').style.display='flex';
+  document.getElementById('userName').textContent=currentUser.charAt(0).toUpperCase()+currentUser.slice(1);
+  const roleLabels={admin:'Amministratore',smm:'Social Media Mgr',grafico:'Grafico'};
+  document.getElementById('userRoleLabel').textContent=roleLabels[currentRole]||currentRole;
+  const dotColors={admin:'var(--ad)',smm:'var(--mkt)',grafico:'var(--rnd)'};
+  document.getElementById('userDot').style.background=dotColors[currentRole]||'var(--text3)';
+  const isAdmin=currentRole==='admin';
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display=isAdmin?'':'none');
+  loadAll();
+}
+
+// ── DATA ─────────────────────────────────────────────────────────────────────
+async function loadAll(){
+  setSyncStatus('<span class="spinner"></span>sync...');
+  try{
+    const [rP,rT,rL,rC]=await Promise.all([
+      sb.from('progetti').select('*').order('created_at',{ascending:false}),
+      sb.from('tasks').select('*').order('created_at',{ascending:false}),
+      sb.from('commenti').select('*').order('created_at',{ascending:true}),
+      sb.from('commenti').select('*').order('created_at',{ascending:true})
+    ]);
+    P=rP.data||[]; T=rT.data||[]; C=rC.data||[];
+    const logKey='bpm_log_'+currentUser;
+    L=JSON.parse(localStorage.getItem(logKey)||'[]');
+    setSyncStatus('✓ aggiornato');
+    renderAll();
+  }catch(e){
+    setSyncStatus('⚠ offline');
+    renderAll();
+  }
+}
+
+function visibleTasks(){
+  if(currentRole==='admin') return T;
+  return T.filter(t=>t.assegnato===currentUser||t.assegnato==='tutti');
+}
+
+// ── RENDER ALL ───────────────────────────────────────────────────────────────
+function renderAll(){
+  updateCounts();
+  renderBriefing();
+  if(currentRole==='admin'){
+    renderAllProj(curProjFilter);
+    renderScadenze();
+    Object.keys(RUOLI).forEach(r=>renderRuolo(r));
+  }
+  renderTaskList(curTaskFilter);
+  renderLog();
+
+  const gg=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  const mm=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+  const ds2=`${gg[today.getDay()]} ${today.getDate()} ${mm[today.getMonth()]} ${today.getFullYear()}`;
+  document.getElementById('sideDate').textContent=ds2;
+  document.getElementById('briefDate').textContent=ds2;
+  const h=new Date().getHours();
+  document.getElementById('greeting').textContent=(h<12?'Buongiorno':(h<18?'Buon pomeriggio':'Buonasera'))+'!';
+}
+
+function updateCounts(){
+  const ap=visibleTasks().filter(t=>!t.done);
+  document.getElementById('nb-task').textContent=ap.length;
+  if(currentRole==='admin'){
+    document.getElementById('nb-proj').textContent=P.length;
+    document.getElementById('nb-scad').textContent=ap.filter(t=>{const d=ds(t.dead);return d&&d.diff<=3;}).length;
+    Object.keys(RUOLI).forEach(r=>{
+      document.getElementById('nb-'+r).textContent=T.filter(t=>t.ruolo===r&&!t.done).length;
+    });
+  }
+}
+
+// ── BRIEFING ─────────────────────────────────────────────────────────────────
+function renderBriefing(){
+  if(currentRole==='admin'){
+    const rg=document.getElementById('ruoliGrid');
+    rg.innerHTML=Object.entries(RUOLI).map(([k,r])=>{
+      const ap=T.filter(t=>!t.done&&t.ruolo===k);
+      const crit=ap.filter(t=>t.priorita==='critica').length;
+      const scad=ap.filter(t=>{const d=ds(t.dead);return d&&d.diff<=3;}).length;
+      const alertHtml=crit>0
+        ?`<span class="ruolo-card-alert" style="background:var(--red2);color:var(--red)">${crit} critico${crit>1?'i':''}</span>`
+        :scad>0
+        ?`<span class="ruolo-card-alert" style="background:var(--amber2);color:var(--amber)">${scad} in scadenza</span>`
+        :`<span class="ruolo-card-alert" style="background:var(--bg5);color:var(--text3)">OK ✓</span>`;
+      return`<div class="ruolo-card"><div class="ruolo-card-bar" style="background:${r.color}"></div><div class="ruolo-card-nome" style="color:${r.color}">${r.emoji} ${esc(r.label)}</div><div class="ruolo-card-count" style="color:${r.color}">${ap.length}</div><div class="ruolo-card-lbl">task aperti</div>${alertHtml}</div>`;
+    }).join('');
+  }
+
+  const prioOrd={critica:0,alta:1,media:2,bassa:3};
+  const bs=document.getElementById('briefSections');
+
+  if(currentRole==='admin'){
+    let html='';
+    const tday=new Date(); tday.setHours(0,0,0,0);
+    const prioScore={critica:0,alta:1,media:2,bassa:3};
+    function dScore(d){if(!d)return 999;const df=Math.round((new Date(d)-tday)/86400000);return df<0?-1:df;}
+    function srtT(list){return [...list].sort((a,b)=>{const pa=prioScore[a.priorita]||2,pb=prioScore[b.priorita]||2,da=dScore(a.dead),db=dScore(b.dead);return(pa*7+Math.min(da,30))-(pb*7+Math.min(db,30));});}
+    Object.entries(RUOLI).forEach(([k,r])=>{
+      const rProj=P.filter(p=>p.ruolo===k);
+      const rTasksOpen=T.filter(t=>!t.done&&t.ruolo===k);
+      const taskNoProj=srtT(rTasksOpen.filter(t=>!t.proj_id));
+      html+=`<div class="brief-ruolo-section"><div class="brief-ruolo-hd"><div class="brief-ruolo-hd-dot" style="background:${r.color}"></div><div class="brief-ruolo-hd-title" style="color:${r.color}">${r.emoji} ${esc(r.label)}</div><div class="brief-ruolo-hd-count">${rProj.length} progetti &middot; ${rTasksOpen.length} task aperti</div></div>`;
+      if(rProj.length===0&&rTasksOpen.length===0){
+        html+=`<div style="color:var(--text4);font-size:12px;padding:6px 0 4px">Nessun progetto o task ✓</div>`;
+      } else {
+        rProj.forEach(p=>{
+          const allPT=T.filter(t=>t.proj_id===p.id);
+          const openPT=srtT(allPT.filter(t=>!t.done));
+          const donePT=allPT.filter(t=>t.done).length;
+          const pct=allPT.length?Math.round(donePT/allPT.length*100):0;
+          const ds2=dScore(p.dead);
+          const dCls=!p.dead?'':ds2<0?'tag-dead-scaduto':ds2===0?'tag-dead-oggi':ds2<=3?'tag-dead-presto':'tag-dead-ok';
+          const dLbl=!p.dead?'':ds2<0?'Scaduto':ds2===0?'Oggi':(ds2+'gg');
+          html+=`<div style="background:var(--bg3);border:1px solid var(--border);border-left:3px solid ${r.color};border-radius:var(--r);padding:12px 14px;margin-bottom:8px;">`;
+          html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:${r.color}">◈ ${esc(p.nome)}</span>${p.dead?`<span class="tag ${dCls}">📅 ${dLbl}</span>`:''}<span class="tag" style="background:var(--bg5);color:var(--text3)">${pct}%</span></div><span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;white-space:nowrap">${openPT.length} aperti</span></div>`;
+          html+=`<div style="height:3px;background:var(--bg5);border-radius:2px;margin-bottom:${openPT.length?'10':'4'}px"><div style="height:100%;width:${pct}%;background:${r.color};border-radius:2px"></div></div>`;
+          if(openPT.length){html+=openPT.map(taskCard).join('');}
+          else if(allPT.length){html+=`<div style="color:var(--text4);font-size:12px;padding:2px 0">Tutti i task completati ✓</div>`;}
+          else{html+=`<div style="color:var(--text4);font-size:12px;padding:2px 0">Nessun task &mdash; <span style="color:var(--ad);cursor:pointer" onclick="openT()">+ Aggiungi</span></div>`;}
+          html+=`</div>`;
+        });
+        if(taskNoProj.length){
+          html+=`<div style="margin-top:4px"><div style="font-size:10px;color:var(--text4);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Task senza progetto</div>${taskNoProj.map(taskCard).join('')}</div>`;
+        }
+      }
+      html+=`</div>`;
+    });
+    bs.innerHTML=html;
+  } else {
+    const myTasks=visibleTasks().filter(t=>!t.done).sort((a,b)=>{
+      const pp=(prioOrd[a.priorita]||2)-(prioOrd[b.priorita]||2);
+      if(pp!==0)return pp;
+      if(a.dead&&b.dead)return a.dead.localeCompare(b.dead);
+      return a.dead?-1:b.dead?1:0;
+    });
+    const u=UTENTI[currentUser]||UTENTI.tutti;
+    bs.innerHTML=`<div class="brief-ruolo-section"><div class="brief-ruolo-hd"><div class="brief-ruolo-hd-dot" style="background:${u.color}"></div><div class="brief-ruolo-hd-title" style="color:${u.color}">I tuoi task di oggi</div><div class="brief-ruolo-hd-count">${myTasks.length} aperti</div></div>`+(myTasks.length?myTasks.map(t=>taskCard(t)).join(''):`<div style="color:var(--text4);font-size:12px;padding:4px 0">Nessun task assegnato ✓</div>`)+`</div>`;
+  }
+}
+
+// ── TASK CARD ─────────────────────────────────────────────────────────────────
+function taskCard(t){
+  const r=RUOLI[t.ruolo]||RUOLI.ad;
+  const d=ds(t.dead);
+  const deadHtml=d?`<span class="tag ${d.cls}">${d.lbl}</span>`:'';
+  const tempoHtml=t.tempo?`<span class="tag" style="background:var(--bg5);color:var(--text3)">⏱ ${esc(t.tempo)}</span>`:'';
+  const proj=P.find(p=>p.id===t.proj_id);
+  const projHtml=proj?`<span class="tag" style="background:var(--bg4);color:${r.color}">◈ ${esc(proj.nome)}</span>`:'';
+  const assHtml=t.assegnato&&t.assegnato!=='tutti'?`<span class="tag" style="background:var(--bg5);color:var(--text2)">→ ${esc(UTENTI[t.assegnato]?.label||t.assegnato)}</span>`:'';
+  const prioMap={critica:'tag-prio-critica',alta:'tag-prio-alta',media:'tag-prio-media',bassa:'tag-prio-bassa'};
+  const prioLbl={critica:'CRITICA',alta:'ALTA',media:'MEDIA',bassa:'BASSA'};
+  const taskComm=C.filter(c=>c.task_id===t.id);
+  const commHtml=taskComm.map(c=>`<div class="commento"><div class="commento-autore">${esc(c.autore)} · ${new Date(c.created_at).toLocaleString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>${esc(c.testo)}</div>`).join('');
+  const adminActions=currentRole==='admin'?`<button class="btn btn-sm btn-icon" onclick="editT('${t.id}')">✎</button><button class="btn btn-sm btn-icon btn-danger" onclick="delT('${t.id}')">✕</button>`:'';
+  return`<div class="task-card ${t.done?'done':''}">
+    <div class="task-check" onclick="toggleT('${t.id}')">${t.done?'✓':''}</div>
+    <div class="task-body">
+      <div class="task-name">${esc(t.nome)}</div>
+      ${t.descrizione?`<div class="task-desc">${esc(t.descrizione)}</div>`:''}
+      <div class="task-tags">
+        <span class="tag ${r.tagCls}">${r.emoji} ${esc(r.label)}</span>
+        <span class="tag ${prioMap[t.priorita]||'tag-prio-bassa'}">${prioLbl[t.priorita]||t.priorita}</span>
+        ${projHtml}${assHtml}${deadHtml}${tempoHtml}
+      </div>
+      <div class="commenti-box">
+        ${commHtml}
+        <div class="commento-input-row">
+          <input class="commento-input" id="ci-${t.id}" placeholder="Scrivi un commento..." onkeydown="if(event.key==='Enter')addCommento('${t.id}')">
+          <button class="btn btn-sm" onclick="addCommento('${t.id}')">Invia</button>
+        </div>
+      </div>
+    </div>
+    <div class="task-actions">${adminActions}</div>
+  </div>`;
+}
+
+async function toggleT(id){
+  const t=T.find(x=>x.id===id);if(!t)return;
+  const newDone=!t.done;
+  t.done=newDone;
+  await sb.from('tasks').update({done:newDone,done_at:newDone?new Date().toISOString():null}).eq('id',id);
+  renderAll();toast(newDone?'✓ Task completato!':'Task riaperto');
+}
+
+async function delT(id){
+  if(!confirm('Eliminare questo task?'))return;
+  T=T.filter(x=>x.id!==id);
+  await sb.from('tasks').delete().eq('id',id);
+  renderAll();toast('Task eliminato');
+}
+
+async function addCommento(taskId){
+  const inp=document.getElementById('ci-'+taskId);
+  const testo=inp.value.trim();if(!testo)return;
+  const autore=currentUser.charAt(0).toUpperCase()+currentUser.slice(1);
+  const{data}=await sb.from('commenti').insert({task_id:taskId,autore,testo}).select().single();
+  if(data){C.push(data);inp.value='';renderAll();toast('Commento aggiunto');}
+}
+
+// ── TASK LIST ─────────────────────────────────────────────────────────────────
+function renderTaskList(f){
+  curTaskFilter=f;
+  const prioOrd={critica:0,alta:1,media:2,bassa:3};
+  let list=[...visibleTasks()];
+  if(f==='aperti')  list=list.filter(t=>!t.done);
+  if(f==='critica') list=list.filter(t=>t.priorita==='critica'&&!t.done);
+  if(f==='alta')    list=list.filter(t=>t.priorita==='alta'&&!t.done);
+  list.sort((a,b)=>{
+    if(a.done!==b.done)return a.done?1:-1;
+    const today=new Date(); today.setHours(0,0,0,0);
+    function deadScore(d){
+      if(!d)return 999;
+      const diff=Math.round((new Date(d)-today)/86400000);
+      return diff<0?-1:diff;
+    }
+    const prioScore={critica:0,alta:1,media:2,bassa:3};
+    const pa=prioScore[a.priorita]||2, pb=prioScore[b.priorita]||2;
+    const da=deadScore(a.dead), db=deadScore(b.dead);
+    const scoreA=pa*7+Math.min(da,30);
+    const scoreB=pb*7+Math.min(db,30);
+    return scoreA-scoreB;
+  });
+  const el=document.getElementById('taskList');
+  el.innerHTML=list.length?list.map(taskCard).join(''):`<div class="empty"><div class="empty-icon">✦</div><div class="empty-t">Nessun task</div></div>`;
+}
+
+function filterTask(f,btn){
+  document.querySelectorAll('#taskFilters .fbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');renderTaskList(f);
+}
+
+// ── SCADENZE ──────────────────────────────────────────────────────────────────
+function renderScadenze(){
+  const list=T.filter(t=>{if(t.done)return false;const d=ds(t.dead);return d&&d.diff<=7;}).sort((a,b)=>(a.dead||'').localeCompare(b.dead||''));
+  document.getElementById('scadList').innerHTML=list.length?list.map(taskCard).join(''):`<div class="empty"><div class="empty-icon">⚡</div><div class="empty-t">Nessuna scadenza nei prossimi 7 giorni</div></div>`;
+}
+
+// ── RUOLO PANEL ───────────────────────────────────────────────────────────────
+function renderRuolo(r){
+  const prioOrd={critica:0,alta:1,media:2,bassa:3};
+  const rProj=P.filter(p=>p.ruolo===r);
+  document.getElementById('proj-'+r).innerHTML=rProj.length?rProj.map(projCard).join(''):`<div class="empty"><div class="empty-icon">◈</div><div class="empty-t">Nessun progetto</div></div>`;
+  const rTasks=T.filter(t=>t.ruolo===r&&!t.done).sort((a,b)=>{
+    const pp=(prioOrd[a.priorita]||2)-(prioOrd[b.priorita]||2);
+    if(pp!==0)return pp;
+    return(a.dead||'').localeCompare(b.dead||'');
+  });
+  document.getElementById('tasks-'+r).innerHTML=rTasks.length?`<div class="sh"><span class="sh-label">Task aperti</span><span class="sh-line"></span></div>`+rTasks.map(taskCard).join(''):'';
+}
+
+// ── PROGETTI ──────────────────────────────────────────────────────────────────
+function projCard(p){
+  const r=RUOLI[p.ruolo]||RUOLI.ad;
+  const pt=T.filter(t=>t.proj_id===p.id);
+  const done=pt.filter(t=>t.done).length;
+  const pct=pt.length?Math.round(done/pt.length*100):0;
+  const d=ds(p.dead);
+  const deadHtml=d?`<span class="tag ${d.cls}">${d.lbl}</span>`:'<span></span>';
+  return`<div class="proj-card">
+    <div class="proj-top-bar" style="background:${r.color}"></div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+      <div><div style="font-size:10px;color:${r.color};font-family:'DM Mono',monospace;margin-bottom:3px">${r.emoji} ${esc(r.label)}</div><div class="proj-name">${esc(p.nome)}</div></div>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-sm btn-icon" onclick="editProj('${p.id}');event.stopPropagation()">✎</button>
+        <button class="btn btn-sm btn-icon btn-danger" onclick="delProj('${p.id}');event.stopPropagation()">✕</button>
+      </div>
+    </div>
+    <div class="proj-desc">${esc(p.descrizione||'—')}</div>
+    <div class="proj-mini-stats">
+      <div><div class="proj-ms-val" style="color:${r.color}">${pt.length}</div><div class="proj-ms-lbl">task</div></div>
+      <div><div class="proj-ms-val" style="color:var(--sic)">${done}</div><div class="proj-ms-lbl">fatti</div></div>
+      <div><div class="proj-ms-val" style="color:var(--text2)">${pct}%</div><div class="proj-ms-lbl">avanz.</div></div>
+    </div>
+    <div class="proj-bar"><div class="proj-bar-fill" style="width:${pct}%;background:${r.color}"></div></div>
+    <div class="proj-foot">${deadHtml}<span class="tag" style="background:var(--bg5);color:var(--text3)">${esc(p.stato||'attivo')}</span></div>
+    ${p.note?`<div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.4">${esc(p.note)}</div>`:''}
+  </div>`;
+}
+
+function renderAllProj(r){
+  curProjFilter=r;
+  const list=r?P.filter(p=>p.ruolo===r):P;
+  document.getElementById('projGrid').innerHTML=list.length?list.map(projCard).join(''):`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">◈</div><div class="empty-t">Nessun progetto</div></div>`;
+}
+
+function filterProj(r,btn){
+  document.querySelectorAll('#projFilters .fbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');renderAllProj(r);
+}
+
+// ── SAVE PROJ ─────────────────────────────────────────────────────────────────
+async function saveProj(){
+  const nome=document.getElementById('p_nome').value.trim();
+  if(!nome){alert('Inserisci il nome del progetto');return;}
+  const eid=document.getElementById('ep_id').value;
+  const data={nome,descrizione:document.getElementById('p_desc').value.trim(),ruolo:document.getElementById('p_ruolo').value,stato:document.getElementById('p_stato').value,inizio:document.getElementById('p_inizio').value||null,dead:document.getElementById('p_dead').value||null,note:document.getElementById('p_note').value.trim()};
+  if(eid){
+    await sb.from('progetti').update(data).eq('id',eid);
+    const i=P.findIndex(p=>p.id===eid);if(i>=0)P[i]={...P[i],...data};
+  }else{
+    const{data:d}=await sb.from('progetti').insert(data).select().single();
+    if(d)P.unshift(d);
+  }
+  closeM('mProj');renderAll();toast('Progetto salvato ✓');
+}
+
+async function editProj(id){
+  const p=P.find(x=>x.id===id);if(!p)return;
+  document.getElementById('ep_id').value=id;
+  document.getElementById('mProjTitle').textContent='Modifica Progetto';
+  document.getElementById('p_nome').value=p.nome;
+  document.getElementById('p_desc').value=p.descrizione||'';
+  document.getElementById('p_ruolo').value=p.ruolo||'ad';
+  document.getElementById('p_stato').value=p.stato||'attivo';
+  document.getElementById('p_inizio').value=p.inizio||'';
+  document.getElementById('p_dead').value=p.dead||'';
+  document.getElementById('p_note').value=p.note||'';
+  openM('mProj');
+}
+
+async function delProj(id){
+  if(!confirm('Eliminare il progetto?'))return;
+  await sb.from('progetti').delete().eq('id',id);
+  P=P.filter(p=>p.id!==id);T=T.filter(t=>t.proj_id!==id);
+  renderAll();toast('Progetto eliminato');
+}
+
+// ── SAVE TASK ─────────────────────────────────────────────────────────────────
+function updateProjSel(){
+  const r=document.getElementById('t_ruolo').value;
+  const sel=document.getElementById('t_proj');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Nessun progetto —</option>'+P.filter(p=>p.ruolo===r).map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join('');
+  if(cur)sel.value=cur;
+}
+
+async function saveTask(){
+  const nome=document.getElementById('t_nome').value.trim();
+  if(!nome){alert('Inserisci il nome del task');return;}
+  const eid=document.getElementById('et_id').value;
+  const data={nome,descrizione:document.getElementById('t_desc').value.trim(),ruolo:document.getElementById('t_ruolo').value,proj_id:document.getElementById('t_proj').value||null,priorita:document.getElementById('t_prio').value,assegnato:document.getElementById('t_assegna').value,dead:document.getElementById('t_dead').value||null,tempo:document.getElementById('t_tempo').value};
+  if(eid){
+    await sb.from('tasks').update(data).eq('id',eid);
+    const i=T.findIndex(t=>t.id===eid);if(i>=0)T[i]={...T[i],...data};
+  }else{
+    const{data:d}=await sb.from('tasks').insert({...data,done:false}).select().single();
+    if(d)T.unshift(d);
+  }
+  closeM('mTask');renderAll();toast('Task salvato ✓');
+}
+
+async function editT(id){
+  const t=T.find(x=>x.id===id);if(!t)return;
+  document.getElementById('et_id').value=id;
+  document.getElementById('mTaskTitle').textContent='Modifica Task';
+  document.getElementById('t_nome').value=t.nome;
+  document.getElementById('t_desc').value=t.descrizione||'';
+  document.getElementById('t_ruolo').value=t.ruolo||'ad';
+  updateProjSel();
+  document.getElementById('t_proj').value=t.proj_id||'';
+  document.getElementById('t_prio').value=t.priorita||'media';
+  document.getElementById('t_assegna').value=t.assegnato||'tutti';
+  document.getElementById('t_dead').value=t.dead||'';
+  document.getElementById('t_tempo').value=t.tempo||'';
+  openM('mTask');
+}
+
+// ── LOG (locale per utente) ───────────────────────────────────────────────────
+function saveLog(){
+  const text=document.getElementById('logInput').value.trim();if(!text)return;
+  L.unshift({id:'l'+Date.now(),testo:text,data:new Date().toLocaleString('it-IT')});
+  document.getElementById('logInput').value='';
+  localStorage.setItem('bpm_log_'+currentUser,JSON.stringify(L));
+  renderLog();toast('Nota salvata ✓');
+}
+
+function delLog(id){
+  L=L.filter(l=>l.id!==id);
+  localStorage.setItem('bpm_log_'+currentUser,JSON.stringify(L));
+  renderLog();
+}
+
+function renderLog(){
+  const el=document.getElementById('logList');
+  if(!L.length){el.innerHTML=`<div class="empty"><div class="empty-icon">◎</div><div class="empty-t">Nessuna nota</div></div>`;return;}
+  el.innerHTML=L.map(l=>`<div class="log-entry"><div class="log-date">${esc(l.data)}</div><div class="log-text">${esc(l.testo).replace(/\n/g,'<br>')}</div>${l.audio?`<audio controls src="${l.audio}" style="width:100%;height:32px;margin-top:8px"></audio>`:''}<div style="margin-top:7px"><button class="btn btn-sm btn-danger" onclick="delLog('${l.id}')">Elimina</button></div></div>`).join('');
+}
+
+// ── VOICE ─────────────────────────────────────────────────────────────────────
+let mr,ac=[],rec=false;
+async function toggleVoice(){
+  if(!rec){
+    try{
+      const st=await navigator.mediaDevices.getUserMedia({audio:true});
+      mr=new MediaRecorder(st);ac=[];
+      mr.ondataavailable=e=>ac.push(e.data);
+      mr.onstop=()=>{
+        st.getTracks().forEach(t=>t.stop());
+        const blob=new Blob(ac,{type:'audio/webm'});
+        const url=URL.createObjectURL(blob);
+        const ts=new Date().toLocaleString('it-IT');
+        L.unshift({id:'l'+Date.now(),testo:`🎙 Nota vocale — ${ts}`,audio:url,data:ts});
+        localStorage.setItem('bpm_log_'+currentUser,JSON.stringify(L));
+        renderLog();
+        document.getElementById('voiceBtn').classList.remove('recording');
+        document.getElementById('voiceBtnTxt').textContent='Registra nota vocale';
+        rec=false;
+      };
+      mr.start();rec=true;
+      document.getElementById('voiceBtn').classList.add('recording');
+      document.getElementById('voiceBtnTxt').textContent='● Ferma registrazione';
+    }catch(e){alert('Microfono non disponibile.');}
+  }else{mr.stop();}
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function openM(id){document.getElementById(id).classList.remove('hidden');}
+function closeM(id){
+  document.getElementById(id).classList.add('hidden');
+  if(id==='mProj')document.getElementById('ep_id').value='';
+  if(id==='mTask')document.getElementById('et_id').value='';
+}
+document.querySelectorAll('.modal-ov').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)closeM(el.id);});});
+
+function openP(){
+  document.getElementById('ep_id').value='';
+  document.getElementById('mProjTitle').textContent='Nuovo Progetto';
+  ['p_nome','p_desc','p_note'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('p_ruolo').value='ad';document.getElementById('p_stato').value='attivo';
+  document.getElementById('p_inizio').value='';document.getElementById('p_dead').value='';
+  openM('mProj');
+}
+
+function openT(){
+  document.getElementById('et_id').value='';
+  document.getElementById('mTaskTitle').textContent='Nuovo Task';
+  ['t_nome','t_desc'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('t_ruolo').value='ad';updateProjSel();
+  document.getElementById('t_prio').value='media';document.getElementById('t_assegna').value='tutti';
+  document.getElementById('t_dead').value='';document.getElementById('t_tempo').value='';
+  openM('mTask');
+}
+
+// ── PANELS ────────────────────────────────────────────────────────────────────
+const PT={briefing:'Briefing',progetti:'Tutti i Progetti',tasks:'I miei Task',scadenze:'In scadenza','ruolo-ad':'AD + Marketing','ruolo-mkt':'Marketing Manager','ruolo-rnd':'R&D Manager','ruolo-sic':'Progetto Sicurezza',log:'Diario'};
+
+function sp(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  const nb=document.getElementById('nav-'+name);if(nb)nb.classList.add('active');
+  document.getElementById('pageTitle').textContent=PT[name]||name;
+  if(name==='tasks')renderTaskList(curTaskFilter);
+  if(name==='scadenze')renderScadenze();
+  if(name==='progetti')renderAllProj(curProjFilter);
+  if(name.startsWith('ruolo-'))renderRuolo(name.replace('ruolo-',''));
+  loadAll();
+}
+
+
+// ── FLATPICKR DATE PICKERS ────────────────────────────────────────────────────
+function initDatePickers() {
+  const commonConfig = {
+    locale: "it",
+    dateFormat: "Y-m-d",
+    altInput: true,
+    altFormat: "d M Y",
+    disableMobile: false,
+    theme: "dark"
+  };
+  flatpickr("#p_inizio", commonConfig);
+  flatpickr("#p_dead", commonConfig);
+  flatpickr("#t_dead", commonConfig);
+}
+document.addEventListener("DOMContentLoaded", initDatePickers);
+// ── AUTO-REFRESH ogni 30s ─────────────────────────────────────────────────────
+setInterval(loadAll, 30000);
+
+// ── ESPORTA BO ───────────────────────────────────────────────────────────────
+function esportaBO(){
+  const today = new Date();
+  const gg=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  const mm=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+  const dateStr = gg[today.getDay()]+' '+today.getDate()+' '+mm[today.getMonth()]+' '+today.getFullYear();
+  const prioOrd={critica:0,alta:1,media:2,bassa:3};
+  const prioEmoji={critica:'🔴',alta:'🟡',media:'🔵',bassa:'⚪'};
+  const ruoliLabel={ad:'AD + Marketing',mkt:'Marketing Manager',rnd:'R&D Manager',sic:'Progetto Sicurezza'};
+
+  let testo = `📋 PMANAGER BOSCAINI — ${dateStr}
+`;
+  testo += `${'─'.repeat(40)}
+
+`;
+
+  // Stats
+  const aperti = T.filter(t=>!t.done);
+  const critici = aperti.filter(t=>t.priorita==='critica');
+  const scadenti = aperti.filter(t=>{const d=new Date(t.dead||'');d.setHours(0,0,0,0);const diff=Math.round((d-today)/86400000);return t.dead&&diff<=3;});
+  testo += `📊 STATO: ${P.length} progetti · ${aperti.length} task aperti · ${critici.length} critici · ${scadenti.length} in scadenza
+
+`;
+
+  // Per ruolo
+  ['ad','mkt','rnd','sic'].forEach(k=>{
+    const rProj = P.filter(p=>p.ruolo===k);
+    const rTasks = aperti.filter(t=>t.ruolo===k).sort((a,b)=>(prioOrd[a.priorita]||2)-(prioOrd[b.priorita]||2));
+    if(!rProj.length && !rTasks.length) return;
+    testo += `
+🏷 ${ruoliLabel[k]||k}
+`;
+    rProj.forEach(p=>{
+      const pt=T.filter(t=>t.proj_id===p.id);
+      const done=pt.filter(t=>t.done).length;
+      const pct=pt.length?Math.round(done/pt.length*100):0;
+      testo += `  ◈ ${p.nome} [${pct}%${p.dead?' · scad.'+p.dead:''}]
+`;
+    });
+    rTasks.forEach(t=>{
+      const proj=P.find(p=>p.id===t.proj_id);
+      testo += `  ${prioEmoji[t.priorita]||'⚪'} ${t.nome}`;
+      if(t.dead) testo += ` [${t.dead}]`;
+      if(proj) testo += ` (${proj.nome})`;
+      if(t.assegnato&&t.assegnato!=='tutti') testo += ` → ${t.assegnato}`;
+      testo += '
+';
+    });
+  });
+
+  testo += `
+${'─'.repeat(40)}
+`;
+
+  // Copia negli appunti
+  navigator.clipboard.writeText(testo).then(()=>{
+    toast('✓ Copiato! Incolla su Claude con BO:');
+  }).catch(()=>{
+    // Fallback: mostra in popup
+    const ta = document.createElement('textarea');
+    ta.value = testo;
+    ta.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;height:60%;z-index:9999;background:#1a1a1a;color:#efefef;padding:16px;border:1px solid rgba(255,255,255,0.2);border-radius:10px;font-family:DM Mono,monospace;font-size:12px';
+    document.body.appendChild(ta);
+    ta.select();
+    const close = document.createElement('button');
+    close.textContent='✕ Chiudi';
+    close.style.cssText='position:fixed;top:calc(50% - 32%);left:calc(50% + 37%);transform:translate(-50%,-50%);z-index:10000;padding:6px 12px;background:#e8ff47;color:#080808;border:none;border-radius:6px;cursor:pointer;font-weight:700';
+    close.onclick=()=>{document.body.removeChild(ta);document.body.removeChild(close);};
+    document.body.appendChild(close);
+  });
+}
+
+// ── START ─────────────────────────────────────────────────────────────────────
+const saved=localStorage.getItem('bpm_user');
+if(saved){
+  try{const{name,role}=JSON.parse(saved);currentUser=name;currentRole=role;applyUser();}
+  catch(e){document.getElementById('loginScreen').style.display='flex';}
+}
+</script>
+</body>
+</html>
