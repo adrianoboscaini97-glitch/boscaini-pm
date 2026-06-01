@@ -205,6 +205,110 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .voice-btn:hover{border-color:var(--sic);color:var(--sic);background:var(--sic3);}
 .voice-btn.recording{border-color:var(--red);color:var(--red);background:var(--red2);animation:rpulse 1s infinite;}
 @keyframes rpulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* ── MOBILE RESPONSIVE ───────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .shell { flex-direction: column; }
+
+  .sidebar {
+    position: fixed;
+    top: 0; left: -100%;
+    width: 85%;
+    height: 100vh;
+    z-index: 500;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+  }
+
+  .sidebar.open { left: 0; }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 499;
+  }
+
+  .sidebar-overlay.show { display: block; }
+
+  .main { width: 100%; }
+
+  .topbar {
+    padding: 10px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+  }
+
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+
+  .hamburger {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: var(--r2);
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .page-title { font-size: 15px; }
+
+  .panel { padding: 14px; }
+
+  /* Stats grid 2 colonne su mobile */
+  .ruoli-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
+
+  /* Proj grid 1 colonna */
+  .proj-grid { grid-template-columns: 1fr !important; }
+
+  /* Task card più grandi */
+  .task-card { padding: 12px; }
+  .task-name { font-size: 14px; }
+  .task-check { width: 24px; height: 24px; font-size: 12px; }
+
+  /* Bottoni più grandi */
+  .btn { padding: 9px 14px; font-size: 13px; }
+  .btn-sm { padding: 8px 12px; font-size: 12px; }
+
+  /* Modal full screen su mobile */
+  .modal-ov { padding: 0; align-items: flex-end; }
+  .modal {
+    border-radius: var(--r) var(--r) 0 0;
+    max-height: 92vh;
+    width: 100%;
+  }
+
+  /* Form rows su mobile */
+  .fg2, .fg3 { grid-template-columns: 1fr !important; gap: 8px; }
+
+  /* Topbar actions */
+  .topbar-right { gap: 5px; }
+  .topbar-right .btn-sm { padding: 7px 10px; font-size: 11px; }
+
+  /* Brief greeting */
+  .brief-greeting { font-size: 20px; }
+
+  /* Task actions sempre visibili su mobile */
+  .task-actions { opacity: 1 !important; }
+
+  /* Commenti box sempre visibile su mobile */
+  .commenti-box { display: block !important; }
+
+  /* Ruolo card */
+  .ruolo-card-count { font-size: 24px; }
+  .ruolo-card-nome { font-size: 10px; }
+}
+
+/* Hamburger nascosto su desktop */
+.hamburger { display: none; }
+
 </style>
 </head>
 <body>
@@ -267,8 +371,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 
 <!-- MAIN -->
 <div class="main">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
   <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()">☰</button>
     <div class="page-title" id="pageTitle">Briefing</div>
+    </div>
     <div class="topbar-right" id="topbarActions">
       <button class="btn btn-sm admin-only" onclick="openP()">+ Progetto</button>
       <button class="btn btn-sm btn-accent admin-only" onclick="openT()">+ Task</button>
@@ -984,6 +1092,26 @@ ${'─'.repeat(40)}
     document.body.appendChild(close);
   });
 }
+
+// ── MOBILE SIDEBAR ───────────────────────────────────────────────────────────
+function toggleSidebar(){
+  const sb = document.querySelector('.sidebar');
+  const ov = document.getElementById('sidebarOverlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('show');
+}
+
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+// Chiudi sidebar quando si clicca su un nav-item su mobile
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(window.innerWidth <= 768) closeSidebar();
+  });
+});
 
 // ── START ─────────────────────────────────────────────────────────────────────
 const saved=localStorage.getItem('bpm_user');
