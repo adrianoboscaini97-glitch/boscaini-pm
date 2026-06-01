@@ -915,7 +915,7 @@ function renderBriefing(){
       const d=dScore(t.dead);
       const deadHtml=t.dead?`<span class="tag" style="color:${d<0?'var(--red)':d===0?'var(--amber)':'var(--text3)'}">${d<0?'⚠ Scaduto':d===0?'📅 Oggi':d===1?'📅 Domani':'📅 '+d+'gg'}</span>`:'';
       const proj=P.find(p=>p.id===t.proj_id);
-      return `<div class="urgent-task prio-${t.priorita} ${t.done?'done':''}" data-id="${t.id}" onclick="toggleT('${t.id}')">
+      return `<div class="urgent-task prio-${t.priorita} ${t.done?'done':''}" data-id="${t.id}" onclick="toggleTWithTracking('${t.id}')">
         <div class="urgent-check">${t.done?'✓':''}</div>
         <div class="urgent-task-body">
           <div class="urgent-task-name">${esc(t.nome)}</div>
@@ -976,7 +976,7 @@ function taskCard(t){
   const commHtml=taskComm.map(c=>`<div class="commento"><div class="commento-autore">${esc(c.autore)} · ${new Date(c.created_at).toLocaleString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>${esc(c.testo)}</div>`).join('');
   const adminActions=currentRole==='admin'?`<button class="btn btn-sm btn-icon" onclick="editT('${t.id}')">✎</button><button class="btn btn-sm btn-icon btn-danger" onclick="delT('${t.id}')">✕</button>`:'';
   return`<div class="task-card ${t.done?'done':''}">
-    <div class="task-check" onclick="toggleT('${t.id}')">${t.done?'✓':''}</div>
+    <div class="task-check" onclick="toggleTWithTracking('${t.id}')">${t.done?'✓':''}</div>
     <div class="task-body">
       <div class="task-name">${esc(t.nome)}</div>
       ${t.descrizione?`<div class="task-desc">${esc(t.descrizione)}</div>`:''}
@@ -1415,15 +1415,13 @@ function selectTime(duration){
   toast('✓ Registrato!');
 }
 
-// Override toggleT to show time modal when completing
-const _origToggleT = toggleT;
-async function toggleT(id){
+// Time modal patch - injected into original toggleT via wrapper
+function toggleTWithTracking(id){
   const t = T.find(x=>x.id===id); if(!t) return;
   const wasD = t.done;
-  await _origToggleT(id);
-  if(!wasD){ // just completed
-    showTimeModal(id, t.nome);
-  }
+  toggleT(id).then(()=>{
+    if(!wasD) showTimeModal(id, t.nome);
+  }).catch(()=>{});
 }
 
 // ── DRAG & DROP ───────────────────────────────────────────────────────────────
