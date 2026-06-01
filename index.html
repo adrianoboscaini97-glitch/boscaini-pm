@@ -208,6 +208,112 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 @keyframes rpulse{0%,100%{opacity:1}50%{opacity:.55}}
 
 
+
+/* ── ACTIVITY LOG & DRAG DROP ─────────────────────────────────────────────── */
+.urgent-task.dragging { opacity: .4; transform: scale(.98); }
+.urgent-task.drag-over { border-color: var(--accent) !important; border-style: dashed !important; }
+
+.time-modal-ov {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 300; padding: 20px;
+}
+.time-modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 28px;
+  width: 100%; max-width: 360px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+.time-modal-title {
+  font-size: 17px; font-weight: 700;
+  letter-spacing: -.3px;
+  margin-bottom: 6px;
+}
+.time-modal-task {
+  font-size: 13px; color: var(--text3);
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+.time-options {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.time-option {
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+}
+.time-option:hover, .time-option.selected {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--ad3);
+}
+.time-skip {
+  font-size: 12px; color: var(--text3);
+  cursor: pointer;
+  text-decoration: underline;
+  background: none; border: none;
+  font-family: inherit;
+}
+.time-skip:hover { color: var(--text2); }
+
+/* REPORT */
+.report-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.report-stat {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  flex: 1;
+}
+.report-stat-val {
+  font-size: 28px; font-weight: 700;
+  letter-spacing: -1px; line-height: 1;
+  margin-bottom: 4px;
+}
+.report-stat-lbl { font-size: 11px; color: var(--text3); }
+.report-stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+
+.log-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.log-item-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.log-item-body { flex: 1; }
+.log-item-name { font-size: 13.5px; font-weight: 500; margin-bottom: 3px; }
+.log-item-meta { font-size: 11px; color: var(--text3); display: flex; gap: 10px; }
+
+@media (max-width: 768px) {
+  .report-stats-grid { grid-template-columns: repeat(2,1fr); }
+  .time-options { grid-template-columns: repeat(2,1fr); }
+}
+
 /* ── BRIEFING REDESIGN ───────────────────────────────────────────────────── */
 .brief-section-title {
   font-size: 11px;
@@ -463,6 +569,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 
     <div class="nav-sep" style="margin-top:6px">Altro</div>
     <button class="nav-item" onclick="sp('log')" id="nav-log"><span class="ni">◎</span> Diario</button>
+    <button class="nav-item" onclick="sp('report')" id="nav-report"><span class="ni">📊</span> Produttività</button>
   </div>
   <div class="sidebar-bottom">
     <div class="date-chip" id="sideDate"></div>
@@ -531,6 +638,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <div class="panel admin-only" id="panel-ruolo-rnd"><div class="proj-grid" id="proj-rnd"></div><div style="margin-top:18px" id="tasks-rnd"></div></div>
   <div class="panel admin-only" id="panel-ruolo-sic"><div class="proj-grid" id="proj-sic"></div><div style="margin-top:18px" id="tasks-sic"></div></div>
 
+  <!-- REPORT PRODUTTIVITÀ -->
+  <div class="panel" id="panel-report">
+    <div class="report-header">
+      <div style="font-size:13px;color:var(--text3)">Aggiornato in tempo reale</div>
+      <div style="display:flex;gap:8px;">
+        <button class="fbtn on" onclick="filterReport('oggi',this)">Oggi</button>
+        <button class="fbtn" onclick="filterReport('settimana',this)">Settimana</button>
+        <button class="fbtn" onclick="filterReport('mese',this)">Mese</button>
+      </div>
+    </div>
+    <div class="report-stats-grid" id="reportStats"></div>
+    <div class="sh"><span class="sh-label">Attività recenti</span><span class="sh-line"></span></div>
+    <div id="reportLog"></div>
+  </div>
+
   <!-- LOG -->
   <div class="panel" id="panel-log">
     <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()"><span>🎙</span><span id="voiceBtnTxt">Registra nota vocale</span></button>
@@ -592,6 +714,27 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 
 <div class="toast" id="toast"></div>
 
+<!-- TIME TRACKING MODAL -->
+<div class="time-modal-ov hidden" id="timeModal">
+  <div class="time-modal">
+    <div class="time-modal-title">✓ Task completato!</div>
+    <div class="time-modal-task" id="timeModalTask"></div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;text-align:left;">Quanto tempo hai impiegato?</div>
+    <div class="time-options" id="timeOptions">
+      <button class="time-option" onclick="selectTime('5min')">5 min</button>
+      <button class="time-option" onclick="selectTime('15min')">15 min</button>
+      <button class="time-option" onclick="selectTime('30min')">30 min</button>
+      <button class="time-option" onclick="selectTime('1h')">1 ora</button>
+      <button class="time-option" onclick="selectTime('2h')">2 ore</button>
+      <button class="time-option" onclick="selectTime('3h')">3 ore</button>
+      <button class="time-option" onclick="selectTime('mezza giornata')">½ gg</button>
+      <button class="time-option" onclick="selectTime('giornata')">Giornata</button>
+      <button class="time-option" onclick="selectTime('+giorni')">&gt;1 gg</button>
+    </div>
+    <button class="time-skip" onclick="selectTime(null)">Salta</button>
+  </div>
+</div>
+
 <script>
 const SUPA_URL = 'https://wdeoejbbuzwwmgcbutoa.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkZW9lamJidXp3d21nY2J1dG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyOTk5OTQsImV4cCI6MjA5NTg3NTk5NH0.ij_Jg1vOaLKF24gc71_NCQH-ugerMeYMjT_v94JuE4I';
@@ -649,6 +792,7 @@ function doLogout(){
 }
 
 function applyUser(){
+  try { activityLog = JSON.parse(localStorage.getItem('bpm_activity_' + currentUser) || '[]'); } catch(e){}
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('appShell').style.display='flex';
   document.getElementById('userName').textContent=currentUser.charAt(0).toUpperCase()+currentUser.slice(1);
@@ -731,16 +875,30 @@ function renderBriefing(){
   const prioOrd={critica:0,alta:1,media:2,bassa:3};
   const prioColor={critica:'var(--red)',alta:'var(--amber)',media:'var(--rnd)',bassa:'var(--text3)'};
 
-  const urgenti=T.filter(t=>{
+  let urgenti=T.filter(t=>{
     if(t.done)return false;
     const p=t.priorita==='critica'||t.priorita==='alta';
     const d=dScore(t.dead);
     return p||(d>=0&&d<=1);
-  }).sort((a,b)=>{
-    const pa=prioOrd[a.priorita]||2,pb=prioOrd[b.priorita]||2;
-    const da=dScore(a.dead),db=dScore(b.dead);
-    return(pa*7+Math.min(da,30))-(pb*7+Math.min(db,30));
   });
+  // Apply manual order if exists
+  if(taskOrder.length){
+    urgenti.sort((a,b)=>{
+      const ia=taskOrder.indexOf(a.id), ib=taskOrder.indexOf(b.id);
+      if(ia>=0&&ib>=0) return ia-ib;
+      if(ia>=0) return -1;
+      if(ib>=0) return 1;
+      const pa=prioOrd[a.priorita]||2,pb=prioOrd[b.priorita]||2;
+      const da=dScore(a.dead),db=dScore(b.dead);
+      return(pa*7+Math.min(da,30))-(pb*7+Math.min(db,30));
+    });
+  } else {
+    urgenti.sort((a,b)=>{
+      const pa=prioOrd[a.priorita]||2,pb=prioOrd[b.priorita]||2;
+      const da=dScore(a.dead),db=dScore(b.dead);
+      return(pa*7+Math.min(da,30))-(pb*7+Math.min(db,30));
+    });
+  }
 
   const el=document.getElementById('briefUrgenti');
   let html='<div class="brief-section-title">Da fare oggi</div>';
@@ -757,7 +915,7 @@ function renderBriefing(){
       const d=dScore(t.dead);
       const deadHtml=t.dead?`<span class="tag" style="color:${d<0?'var(--red)':d===0?'var(--amber)':'var(--text3)'}">${d<0?'⚠ Scaduto':d===0?'📅 Oggi':d===1?'📅 Domani':'📅 '+d+'gg'}</span>`:'';
       const proj=P.find(p=>p.id===t.proj_id);
-      return `<div class="urgent-task prio-${t.priorita} ${t.done?'done':''}" onclick="toggleT('${t.id}')">
+      return `<div class="urgent-task prio-${t.priorita} ${t.done?'done':''}" data-id="${t.id}" onclick="toggleT('${t.id}')">
         <div class="urgent-check">${t.done?'✓':''}</div>
         <div class="urgent-task-body">
           <div class="urgent-task-name">${esc(t.nome)}</div>
@@ -776,6 +934,7 @@ function renderBriefing(){
     }).join('');
   }
   el.innerHTML=html;
+  setTimeout(makeDraggable, 50);
 
   // Ruoli bar (admin only)
   if(currentRole==='admin'){
@@ -1106,7 +1265,7 @@ function openT(){
 }
 
 // ── PANELS ────────────────────────────────────────────────────────────────────
-const PT={briefing:'Briefing',progetti:'Tutti i Progetti',tasks:'I miei Task',scadenze:'In scadenza','ruolo-ad':'AD + Marketing','ruolo-mkt':'Marketing Manager','ruolo-rnd':'R&D Manager','ruolo-sic':'Progetto Sicurezza',log:'Diario'};
+const PT={briefing:'Briefing',progetti:'Tutti i Progetti',tasks:'I miei Task',scadenze:'In scadenza','ruolo-ad':'AD + Marketing','ruolo-mkt':'Marketing Manager','ruolo-rnd':'R&D Manager','ruolo-sic':'Progetto Sicurezza',log:'Diario',report:'📊 Produttività'};
 
 function sp(name){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -1118,6 +1277,7 @@ function sp(name){
   if(name==='scadenze')renderScadenze();
   if(name==='progetti')renderAllProj(curProjFilter);
   if(name.startsWith('ruolo-'))renderRuolo(name.replace('ruolo-',''));
+  if(name==='report')renderReport(reportFilter);
   loadAll();
 }
 
@@ -1211,6 +1371,189 @@ ${'─'.repeat(40)}
   });
 }
 
+// ── ACTIVITY LOG ─────────────────────────────────────────────────────────────
+let activityLog = [];
+try { activityLog = JSON.parse(localStorage.getItem('bpm_activity_' + (currentUser||'adriano')) || '[]'); } catch(e){}
+
+function saveActivity(){ localStorage.setItem('bpm_activity_' + currentUser, JSON.stringify(activityLog)); }
+
+function logActivity(type, taskName, extra={}){
+  const entry = {
+    id: 'a'+Date.now(),
+    type, // 'completed', 'reordered'
+    taskName,
+    ts: new Date().toISOString(),
+    date: new Date().toLocaleDateString('it-IT'),
+    time: new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),
+    ...extra
+  };
+  activityLog.unshift(entry);
+  if(activityLog.length > 500) activityLog = activityLog.slice(0,500);
+  saveActivity();
+}
+
+// Time tracking modal
+let pendingCompleteId = null;
+
+function showTimeModal(taskId, taskName){
+  pendingCompleteId = taskId;
+  document.getElementById('timeModalTask').textContent = taskName;
+  document.querySelectorAll('.time-option').forEach(b => b.classList.remove('selected'));
+  document.getElementById('timeModal').classList.remove('hidden');
+}
+
+function selectTime(duration){
+  document.getElementById('timeModal').classList.add('hidden');
+  if(pendingCompleteId){
+    const t = T.find(x=>x.id===pendingCompleteId);
+    if(t){
+      logActivity('completed', t.nome, { duration, ruolo: t.ruolo, proj: t.proj_id ? (P.find(p=>p.id===t.proj_id)||{}).nome : null });
+    }
+    pendingCompleteId = null;
+  }
+  renderReport('oggi');
+  toast('✓ Registrato!');
+}
+
+// Override toggleT to show time modal when completing
+const _origToggleT = toggleT;
+async function toggleT(id){
+  const t = T.find(x=>x.id===id); if(!t) return;
+  const wasD = t.done;
+  await _origToggleT(id);
+  if(!wasD){ // just completed
+    showTimeModal(id, t.nome);
+  }
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────────────────────────
+let dragSrcId = null;
+
+function makeDraggable(){
+  document.querySelectorAll('.urgent-task').forEach(el => {
+    el.setAttribute('draggable','true');
+    el.addEventListener('dragstart', e => {
+      dragSrcId = el.dataset.id;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', e => {
+      el.classList.remove('dragging');
+      document.querySelectorAll('.urgent-task').forEach(x => x.classList.remove('drag-over'));
+    });
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      document.querySelectorAll('.urgent-task').forEach(x => x.classList.remove('drag-over'));
+      el.classList.add('drag-over');
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      if(dragSrcId && dragSrcId !== el.dataset.id){
+        reorderTasks(dragSrcId, el.dataset.id);
+      }
+    });
+  });
+}
+
+let taskOrder = [];
+try { taskOrder = JSON.parse(localStorage.getItem('bpm_order') || '[]'); } catch(e){}
+
+function reorderTasks(fromId, toId){
+  // Build current order from DOM
+  const cards = [...document.querySelectorAll('.urgent-task')];
+  const ids = cards.map(c => c.dataset.id);
+  const fromIdx = ids.indexOf(fromId);
+  const toIdx = ids.indexOf(toId);
+  if(fromIdx<0||toIdx<0) return;
+  ids.splice(fromIdx,1);
+  ids.splice(toIdx,0,fromId);
+  taskOrder = ids;
+  localStorage.setItem('bpm_order', JSON.stringify(taskOrder));
+  logActivity('reordered', 'Task riordinati manualmente');
+  renderBriefing();
+  setTimeout(makeDraggable, 100);
+}
+
+// ── REPORT ────────────────────────────────────────────────────────────────────
+let reportFilter = 'oggi';
+
+function filterReport(f, btn){
+  reportFilter = f;
+  document.querySelectorAll('#panel-report .fbtn').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderReport(f);
+}
+
+function renderReport(f){
+  // Reload from localStorage
+  try { activityLog = JSON.parse(localStorage.getItem('bpm_activity_' + currentUser) || '[]'); } catch(e){}
+
+  const now = new Date();
+  const todayStr = now.toLocaleDateString('it-IT');
+  const weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate()-7);
+  const monthAgo = new Date(now); monthAgo.setDate(monthAgo.getDate()-30);
+
+  const filtered = activityLog.filter(a => {
+    const d = new Date(a.ts);
+    if(f==='oggi') return a.date === todayStr;
+    if(f==='settimana') return d >= weekAgo;
+    if(f==='mese') return d >= monthAgo;
+    return true;
+  });
+
+  const completed = filtered.filter(a=>a.type==='completed');
+
+  // Time to minutes
+  const timeMap = {'5min':5,'15min':15,'30min':30,'1h':60,'2h':120,'3h':180,'mezza giornata':240,'giornata':480,'+giorni':960};
+  const totalMin = completed.reduce((sum,a) => sum+(timeMap[a.duration]||0), 0);
+  const hrs = Math.floor(totalMin/60);
+  const mins = totalMin%60;
+  const timeStr = totalMin===0 ? '—' : hrs>0 ? `${hrs}h${mins>0?` ${mins}m`:''}` : `${mins}m`;
+
+  // By ruolo
+  const byRuolo = {};
+  completed.forEach(a=>{
+    const r=a.ruolo||'—';
+    byRuolo[r]=(byRuolo[r]||0)+1;
+  });
+  const topRuolo = Object.entries(byRuolo).sort((a,b)=>b[1]-a[1])[0];
+
+  // Stats
+  const statsEl = document.getElementById('reportStats');
+  if(statsEl){
+    statsEl.innerHTML = `
+      <div class="report-stat"><div class="report-stat-val" style="color:var(--accent)">${completed.length}</div><div class="report-stat-lbl">task completati</div></div>
+      <div class="report-stat"><div class="report-stat-val" style="color:var(--rnd)">${timeStr}</div><div class="report-stat-lbl">tempo tracciato</div></div>
+      <div class="report-stat"><div class="report-stat-val" style="color:var(--mkt);font-size:16px">${topRuolo?RUOLI[topRuolo[0]]?.emoji+' '+(topRuolo[0]==='ad'?'AD':topRuolo[0]==='mkt'?'Mktg':topRuolo[0]==='rnd'?'R&D':'Sic.'):'—'}</div><div class="report-stat-lbl">ruolo più attivo</div></div>
+    `;
+  }
+
+  // Log items
+  const logEl = document.getElementById('reportLog');
+  if(logEl){
+    if(!completed.length){
+      logEl.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-t">Nessuna attività registrata</div><div style="font-size:13px;color:var(--text3)">Completa dei task per vedere il report</div></div>`;
+    } else {
+      logEl.innerHTML = completed.map(a=>`
+        <div class="log-item">
+          <div class="log-item-dot" style="background:${RUOLI[a.ruolo]?.color||'var(--accent)'}"></div>
+          <div class="log-item-body">
+            <div class="log-item-name">✓ ${esc(a.taskName)}</div>
+            <div class="log-item-meta">
+              <span>${a.time} · ${a.date}</span>
+              ${a.duration?`<span>⏱ ${esc(a.duration)}</span>`:''}
+              ${a.proj?`<span>◈ ${esc(a.proj)}</span>`:''}
+              ${a.ruolo?`<span>${RUOLI[a.ruolo]?.emoji||''} ${RUOLI[a.ruolo]?.label||a.ruolo}</span>`:''}
+            </div>
+          </div>
+        </div>`).join('');
+    }
+  }
+}
+
+// ── MOBILE SIDEBAR
 // ── MOBILE SIDEBAR ───────────────────────────────────────────────────────────
 function toggleSidebar(){
   const sb = document.querySelector('.sidebar');
