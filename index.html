@@ -13,17 +13,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --bg:#f5f5f7;--bg2:#ffffff;--bg3:#f0f0f2;--bg4:#e8e8ed;--bg5:#d8d8dd;
-  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.12);--border3:rgba(0,0,0,0.2);
-  --text:#1d1d1f;--text2:#6e6e73;--text3:#98989d;--text4:#c7c7cc;
+  --bg:#080808;--bg2:#111111;--bg3:#1a1a1a;--bg4:#222222;--bg5:#2a2a2a;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--border3:rgba(255,255,255,0.2);
+  --text:#f5f5f5;--text2:#aaaaaa;--text3:#666666;--text4:#3a3a3a;
   --r:14px;--r2:10px;--r3:6px;
-  --ad:#1d6827;--ad2:rgba(29,104,39,0.08);--ad3:rgba(29,104,39,0.04);
-  --mkt:#c0390a;--mkt2:rgba(192,57,10,0.08);--mkt3:rgba(192,57,10,0.04);
-  --rnd:#0066cc;--rnd2:rgba(0,102,204,0.08);--rnd3:rgba(0,102,204,0.04);
-  --sic:#1a7f5a;--sic2:rgba(26,127,90,0.08);--sic3:rgba(26,127,90,0.04);
-  --red:#ff3b30;--red2:rgba(255,59,48,0.1);
-  --amber:#ff9500;--amber2:rgba(255,149,0,0.1);
-  --accent:#0066cc;
+  --ad:#c8ff00;--ad2:rgba(200,255,0,0.1);--ad3:rgba(200,255,0,0.05);
+  --mkt:#ff6b4a;--mkt2:rgba(255,107,74,0.12);--mkt3:rgba(255,107,74,0.05);
+  --rnd:#4da6ff;--rnd2:rgba(77,166,255,0.12);--rnd3:rgba(77,166,255,0.05);
+  --sic:#00e5a0;--sic2:rgba(0,229,160,0.12);--sic3:rgba(0,229,160,0.05);
+  --red:#ff4444;--red2:rgba(255,68,68,0.12);
+  --amber:#ffaa00;--amber2:rgba(255,170,0,0.12);
+  --accent:#c8ff00;
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;font-size:15px;}
 .shell{display:flex;height:100vh;}
@@ -207,6 +207,105 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .voice-btn.recording{border-color:var(--red);color:var(--red);background:var(--red2);animation:rpulse 1s infinite;}
 @keyframes rpulse{0%,100%{opacity:1}50%{opacity:.55}}
 
+
+/* ── BRIEFING REDESIGN ───────────────────────────────────────────────────── */
+.brief-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brief-section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.urgent-task {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+}
+.urgent-task::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 16px 0 0 16px;
+}
+.urgent-task.prio-critica::before { background: var(--red); }
+.urgent-task.prio-alta::before { background: var(--amber); }
+.urgent-task.prio-media::before { background: var(--rnd); }
+.urgent-task:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+.urgent-task.done { opacity: .35; }
+.urgent-task.done .urgent-task-name { text-decoration: line-through; color: var(--text3); }
+
+.urgent-check {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  transition: all .15s;
+  cursor: pointer;
+}
+.urgent-task.done .urgent-check { background: var(--sic); border-color: var(--sic); color: #080808; }
+
+.urgent-task-body { flex: 1; min-width: 0; }
+.urgent-task-name { font-size: 15px; font-weight: 600; margin-bottom: 5px; letter-spacing: -.2px; }
+.urgent-task-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.ruoli-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.ruolo-pill {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+  transition: all .15s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.ruolo-pill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.ruolo-pill.ad::after { background: var(--ad); }
+.ruolo-pill.mkt::after { background: var(--mkt); }
+.ruolo-pill.rnd::after { background: var(--rnd); }
+.ruolo-pill.sic::after { background: var(--sic); }
+.ruolo-pill:hover { border-color: var(--border2); transform: translateY(-1px); }
+.ruolo-pill-count { font-size: 26px; font-weight: 700; letter-spacing: -1px; line-height: 1; margin-bottom: 3px; }
+.ruolo-pill-name { font-size: 10px; color: var(--text3); font-weight: 500; letter-spacing: .3px; text-transform: uppercase; }
+.ruolo-pill-alert { font-size: 10px; margin-top: 6px; padding: 2px 8px; border-radius: 20px; display: inline-block; font-weight: 500; }
+
+.empty-brief {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text3);
+}
+.empty-brief-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-brief-title { font-size: 18px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+.empty-brief-sub { font-size: 14px; line-height: 1.5; }
+
 /* ── MOBILE RESPONSIVE ───────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .shell { flex-direction: column; }
@@ -388,11 +487,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   </div>
 
   <!-- BRIEFING -->
-  <div class="panel active" id="panel-briefing">
-    <div class="brief-greeting" id="greeting">Caricamento...</div>
-    <div class="brief-date" id="briefDate"></div>
-    <div class="ruoli-grid admin-only" id="ruoliGrid"></div>
-    <div id="briefSections"></div>
+  <div class="panel active" id="panel-briefing" style="padding:0;display:flex;flex-direction:column;height:100%;overflow:hidden;">
+    <div style="padding:28px 24px 20px;flex-shrink:0;">
+      <div class="brief-greeting" id="greeting">Caricamento...</div>
+      <div class="brief-date" id="briefDate"></div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:0 24px 24px;" id="briefContent">
+      <div id="briefUrgenti"></div>
+      <div id="briefRuoliBar" class="admin-only" style="margin-top:24px;"></div>
+    </div>
   </div>
 
   <!-- TUTTI PROGETTI (admin) -->
@@ -618,74 +721,87 @@ function updateCounts(){
 
 // ── BRIEFING ─────────────────────────────────────────────────────────────────
 function renderBriefing(){
-  if(currentRole==='admin'){
-    const rg=document.getElementById('ruoliGrid');
-    rg.innerHTML=Object.entries(RUOLI).map(([k,r])=>{
-      const ap=T.filter(t=>!t.done&&t.ruolo===k);
-      const crit=ap.filter(t=>t.priorita==='critica').length;
-      const scad=ap.filter(t=>{const d=ds(t.dead);return d&&d.diff<=3;}).length;
-      const alertHtml=crit>0
-        ?`<span class="ruolo-card-alert" style="background:var(--red2);color:var(--red)">${crit} critico${crit>1?'i':''}</span>`
-        :scad>0
-        ?`<span class="ruolo-card-alert" style="background:var(--amber2);color:var(--amber)">${scad} in scadenza</span>`
-        :`<span class="ruolo-card-alert" style="background:var(--bg5);color:var(--text3)">OK ✓</span>`;
-      return`<div class="ruolo-card"><div class="ruolo-card-bar" style="background:${r.color}"></div><div class="ruolo-card-nome" style="color:${r.color}">${r.emoji} ${esc(r.label)}</div><div class="ruolo-card-count" style="color:${r.color}">${ap.length}</div><div class="ruolo-card-lbl">task aperti</div>${alertHtml}</div>`;
+  const h=new Date().getHours();
+  document.getElementById('greeting').textContent=(h<12?'Buongiorno':(h<18?'Buon pomeriggio':'Buonasera'))+'!';
+
+  // Urgenti: critici + scadenti oggi/domani
+  const tday=new Date();tday.setHours(0,0,0,0);
+  function dScore(d){if(!d)return 999;const df=Math.round((new Date(d)-tday)/86400000);return df<0?-1:df;}
+  const prioOrd={critica:0,alta:1,media:2,bassa:3};
+  const prioColor={critica:'var(--red)',alta:'var(--amber)',media:'var(--rnd)',bassa:'var(--text3)'};
+
+  const urgenti=T.filter(t=>{
+    if(t.done)return false;
+    const p=t.priorita==='critica'||t.priorita==='alta';
+    const d=dScore(t.dead);
+    return p||(d>=0&&d<=1);
+  }).sort((a,b)=>{
+    const pa=prioOrd[a.priorita]||2,pb=prioOrd[b.priorita]||2;
+    const da=dScore(a.dead),db=dScore(b.dead);
+    return(pa*7+Math.min(da,30))-(pb*7+Math.min(db,30));
+  });
+
+  const el=document.getElementById('briefUrgenti');
+  let html='<div class="brief-section-title">Da fare oggi</div>';
+
+  if(!urgenti.length){
+    html+=`<div class="empty-brief">
+      <div class="empty-brief-icon">✦</div>
+      <div class="empty-brief-title">Tutto sotto controllo</div>
+      <div class="empty-brief-sub">Nessun task urgente per oggi.<br>Aggiungine uno con il tasto + Task.</div>
+    </div>`;
+  } else {
+    html+=urgenti.map(t=>{
+      const r=RUOLI[t.ruolo]||RUOLI.ad;
+      const d=dScore(t.dead);
+      const deadHtml=t.dead?`<span class="tag" style="color:${d<0?'var(--red)':d===0?'var(--amber)':'var(--text3)'}">${d<0?'⚠ Scaduto':d===0?'📅 Oggi':d===1?'📅 Domani':'📅 '+d+'gg'}</span>`:'';
+      const proj=P.find(p=>p.id===t.proj_id);
+      return `<div class="urgent-task prio-${t.priorita} ${t.done?'done':''}" onclick="toggleT('${t.id}')">
+        <div class="urgent-check">${t.done?'✓':''}</div>
+        <div class="urgent-task-body">
+          <div class="urgent-task-name">${esc(t.nome)}</div>
+          <div class="urgent-task-meta">
+            <span class="tag" style="background:${r.color}22;color:${r.color}">${r.emoji} ${esc(r.label)}</span>
+            ${proj?`<span class="tag" style="color:var(--text3)">◈ ${esc(proj.nome)}</span>`:''}
+            ${deadHtml}
+            ${t.tempo?`<span class="tag" style="color:var(--text3)">⏱ ${esc(t.tempo)}</span>`:''}
+          </div>
+        </div>
+        ${currentRole==='admin'?`<div class="task-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-sm btn-icon" onclick="editT('${t.id}')">✎</button>
+          <button class="btn btn-sm btn-icon btn-danger" onclick="delT('${t.id}')">✕</button>
+        </div>`:''}
+      </div>`;
     }).join('');
   }
+  el.innerHTML=html;
 
-  const prioOrd={critica:0,alta:1,media:2,bassa:3};
-  const bs=document.getElementById('briefSections');
-
+  // Ruoli bar (admin only)
   if(currentRole==='admin'){
-    let html='';
-    const tday=new Date(); tday.setHours(0,0,0,0);
-    const prioScore={critica:0,alta:1,media:2,bassa:3};
-    function dScore(d){if(!d)return 999;const df=Math.round((new Date(d)-tday)/86400000);return df<0?-1:df;}
-    function srtT(list){return [...list].sort((a,b)=>{const pa=prioScore[a.priorita]||2,pb=prioScore[b.priorita]||2,da=dScore(a.dead),db=dScore(b.dead);return(pa*7+Math.min(da,30))-(pb*7+Math.min(db,30));});}
+    const rb=document.getElementById('briefRuoliBar');
+    let rbHtml='<div class="brief-section-title">Per ruolo</div><div class="ruoli-bar">';
     Object.entries(RUOLI).forEach(([k,r])=>{
-      const rProj=P.filter(p=>p.ruolo===k);
-      const rTasksOpen=T.filter(t=>!t.done&&t.ruolo===k);
-      const taskNoProj=srtT(rTasksOpen.filter(t=>!t.proj_id));
-      html+=`<div class="brief-ruolo-section"><div class="brief-ruolo-hd"><div class="brief-ruolo-hd-dot" style="background:${r.color}"></div><div class="brief-ruolo-hd-title" style="color:${r.color}">${r.emoji} ${esc(r.label)}</div><div class="brief-ruolo-hd-count">${rProj.length} progetti &middot; ${rTasksOpen.length} task aperti</div></div>`;
-      if(rProj.length===0&&rTasksOpen.length===0){
-        html+=`<div style="color:var(--text4);font-size:12px;padding:6px 0 4px">Nessun progetto o task ✓</div>`;
-      } else {
-        rProj.forEach(p=>{
-          const allPT=T.filter(t=>t.proj_id===p.id);
-          const openPT=srtT(allPT.filter(t=>!t.done));
-          const donePT=allPT.filter(t=>t.done).length;
-          const pct=allPT.length?Math.round(donePT/allPT.length*100):0;
-          const ds2=dScore(p.dead);
-          const dCls=!p.dead?'':ds2<0?'tag-dead-scaduto':ds2===0?'tag-dead-oggi':ds2<=3?'tag-dead-presto':'tag-dead-ok';
-          const dLbl=!p.dead?'':ds2<0?'Scaduto':ds2===0?'Oggi':(ds2+'gg');
-          html+=`<div style="background:var(--bg3);border:1px solid var(--border);border-left:3px solid ${r.color};border-radius:var(--r);padding:12px 14px;margin-bottom:8px;">`;
-          html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:${r.color}">◈ ${esc(p.nome)}</span>${p.dead?`<span class="tag ${dCls}">📅 ${dLbl}</span>`:''}<span class="tag" style="background:var(--bg5);color:var(--text3)">${pct}%</span></div><span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;white-space:nowrap">${openPT.length} aperti</span></div>`;
-          html+=`<div style="height:3px;background:var(--bg5);border-radius:2px;margin-bottom:${openPT.length?'10':'4'}px"><div style="height:100%;width:${pct}%;background:${r.color};border-radius:2px"></div></div>`;
-          if(openPT.length){html+=openPT.map(taskCard).join('');}
-          else if(allPT.length){html+=`<div style="color:var(--text4);font-size:12px;padding:2px 0">Tutti i task completati ✓</div>`;}
-          else{html+=`<div style="color:var(--text4);font-size:12px;padding:2px 0">Nessun task &mdash; <span style="color:var(--ad);cursor:pointer" onclick="openT()">+ Aggiungi</span></div>`;}
-          html+=`</div>`;
-        });
-        if(taskNoProj.length){
-          html+=`<div style="margin-top:4px"><div style="font-size:10px;color:var(--text4);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Task senza progetto</div>${taskNoProj.map(taskCard).join('')}</div>`;
-        }
-      }
-      html+=`</div>`;
+      const ap=T.filter(t=>!t.done&&t.ruolo===k);
+      const crit=ap.filter(t=>t.priorita==='critica').length;
+      const scad=ap.filter(t=>{const d=dScore(t.dead);return d>=0&&d<=3;}).length;
+      const alertHtml=crit>0
+        ?`<div class="ruolo-pill-alert" style="background:var(--red2);color:var(--red)">${crit} critico${crit>1?'i':''}</div>`
+        :scad>0
+        ?`<div class="ruolo-pill-alert" style="background:var(--amber2);color:var(--amber)">${scad} in scad.</div>`
+        :`<div class="ruolo-pill-alert" style="background:var(--bg4);color:var(--text3)">OK ✓</div>`;
+      rbHtml+=`<div class="ruolo-pill ${k}" onclick="sp('ruolo-${k}')">
+        <div class="ruolo-pill-count" style="color:${r.color}">${ap.length}</div>
+        <div class="ruolo-pill-name">${r.emoji} ${k==='ad'?'AD':k==='mkt'?'Mktg':k==='rnd'?'R&D':'Sic.'}</div>
+        ${alertHtml}
+      </div>`;
     });
-    bs.innerHTML=html;
-  } else {
-    const myTasks=visibleTasks().filter(t=>!t.done).sort((a,b)=>{
-      const pp=(prioOrd[a.priorita]||2)-(prioOrd[b.priorita]||2);
-      if(pp!==0)return pp;
-      if(a.dead&&b.dead)return a.dead.localeCompare(b.dead);
-      return a.dead?-1:b.dead?1:0;
-    });
-    const u=UTENTI[currentUser]||UTENTI.tutti;
-    bs.innerHTML=`<div class="brief-ruolo-section"><div class="brief-ruolo-hd"><div class="brief-ruolo-hd-dot" style="background:${u.color}"></div><div class="brief-ruolo-hd-title" style="color:${u.color}">I tuoi task di oggi</div><div class="brief-ruolo-hd-count">${myTasks.length} aperti</div></div>`+(myTasks.length?myTasks.map(t=>taskCard(t)).join(''):`<div style="color:var(--text4);font-size:12px;padding:4px 0">Nessun task assegnato ✓</div>`)+`</div>`;
+    rbHtml+='</div>';
+    rb.innerHTML=rbHtml;
   }
+
 }
 
-// ── TASK CARD ─────────────────────────────────────────────────────────────────
+
 function taskCard(t){
   const r=RUOLI[t.ruolo]||RUOLI.ad;
   const d=ds(t.dead);
