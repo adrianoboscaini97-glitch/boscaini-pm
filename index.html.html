@@ -2008,14 +2008,9 @@ function renderReport(f){
         <div class="kpi-trend ${trendDir}">${trendStr}</div>
       </div>
       <div class="kpi-card" style="border-top:2px solid var(--rnd)">
-        <div class="kpi-val" style="color:var(--rnd)">${(()=>{
-          const workDays=completed.length>0?new Set(completed.map(a=>new Date(a.ts).toLocaleDateString('it-IT'))).size:1;
-          const avgDayMin=Math.round(totalMin/workDays);
-          const adh=Math.floor(avgDayMin/60),adm=avgDayMin%60;
-          return avgDayMin===0?'—':adh>0?adh+'h'+(adm>0?' '+adm+'m':''):adm+'m';
-        })()}</div>
+        <div class="kpi-val" style="color:var(--rnd)">${avgDailyStr}</div>
         <div class="kpi-label">Tempo medio giornaliero</div>
-        <div class="kpi-trend neutral">Totale: ${timeStr} · ${avgStr}/task</div>
+        <div class="kpi-trend neutral">Totale: ${timeStr} &middot; ${avgStr}/task</div>
       </div>
       <div class="kpi-card" style="border-top:2px solid var(--sic)">
         <div class="kpi-val" style="color:var(--sic)">${onTimePct}%</div>
