@@ -1510,6 +1510,7 @@ function delLog(id){
 
 function renderLog(){
   const el=document.getElementById('logList');
+  if(!el) return;
   if(!L.length){el.innerHTML=`<div class="empty"><div class="empty-icon">◎</div><div class="empty-t">Nessuna nota</div></div>`;return;}
   el.innerHTML=L.map(l=>`<div class="log-entry"><div class="log-date">${esc(l.data)}</div><div class="log-text">${esc(l.testo).replace(/\n/g,'<br>')}</div>${l.audio?`<audio controls src="${l.audio}" style="width:100%;height:32px;margin-top:8px"></audio>`:''}<div style="margin-top:7px"><button class="btn btn-sm btn-danger" onclick="delLog('${l.id}')">Elimina</button></div></div>`).join('');
 }
@@ -1635,6 +1636,36 @@ function esportaBO(){
 let activityLog = [];
 // activityLog viene caricato da Supabase in loadActivityLog(), chiamato da loadAll()
 try { activityLog = JSON.parse(localStorage.getItem('bpm_activity_' + (currentUser||'adriano')) || '[]'); } catch(e){}
+
+async function loadActivityLog(){
+  try{
+    const {data, error} = await sb.from('activity_log')
+      .select('*')
+      .eq('user_id', currentUser)
+      .eq('type','completed')
+      .order('ts',{ascending:false})
+      .limit(1000);
+    if(error) throw error;
+    if(data && data.length>0){
+      activityLog = data.map(r=>({
+        id: r.id,
+        type: r.type,
+        taskName: r.task_name,
+        ruolo: r.ruolo,
+        proj: r.proj,
+        duration: r.duration,
+        overdue: r.overdue,
+        ts: r.ts,
+        date: r.date||new Date(r.ts).toLocaleDateString('it-IT'),
+        time: r.time||new Date(r.ts).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})
+      }));
+      localStorage.setItem('bpm_activity_'+currentUser, JSON.stringify(activityLog));
+    }
+  }catch(e){
+    console.warn('loadActivityLog error:', e);
+    try{ activityLog = JSON.parse(localStorage.getItem('bpm_activity_'+currentUser)||'[]'); }catch(e2){}
+  }
+}
 function saveActivity(){ localStorage.setItem('bpm_activity_' + currentUser, JSON.stringify(activityLog)); }
 function logActivity(type, taskName, extra={}){
   const entry={id:'a'+Date.now(),type,taskName,ts:new Date().toISOString(),date:new Date().toLocaleDateString('it-IT'),time:new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),...extra};
