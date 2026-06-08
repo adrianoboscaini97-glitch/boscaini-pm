@@ -609,6 +609,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div id="dayChart" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"></div>
     <div class="sh"><span class="sh-label">Carico per ruolo</span><span class="sh-line"></span></div>
     <div id="ruoloLoad" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"></div>
+    <div class="sh"><span class="sh-label">Giorno più produttivo</span><span class="sh-line"></span></div>
+    <div id="bestDay" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"></div>
     <div class="sh"><span class="sh-label">Riunioni & Call</span><span class="sh-line"></span></div>
     <div id="meetingLog" style="margin-bottom:20px;"></div>
     <button class="btn btn-sm" onclick="openAddMeeting()" style="margin-bottom:20px">+ Aggiungi riunione</button>
@@ -1824,20 +1826,47 @@ function renderMeetingLog(){
   const el=document.getElementById('meetingLog');
   if(!el) return;
   const timeMap={'15min':15,'30min':30,'1h':60,'2h':120,'3h':180,'mezza giornata':240,'giornata':480};
-  if(!meetings.length){
+
+  // Leggi riunioni sia da localStorage che da task completati con prefisso 📅
+  const fromTasks = T.filter(t=>t.done && t.nome && t.nome.startsWith('📅'));
+  const allMeetings = [
+    ...meetings.map(m=>({
+      id: m.id,
+      nome: m.nome,
+      data: m.data,
+      durata: m.durata,
+      partecipanti: m.partecipanti,
+      fromTask: false
+    })),
+    ...fromTasks.map(t=>({
+      id: t.id,
+      nome: t.nome,
+      data: t.dead||t.done_at?.split('T')[0],
+      durata: t.tempo||'1h',
+      partecipanti: '',
+      fromTask: true
+    }))
+  ];
+
+  // Sort by date desc
+  allMeetings.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+
+  if(!allMeetings.length){
     el.innerHTML=`<div style="color:var(--text3);font-size:12px;padding:8px">Nessuna riunione registrata — clicca "+ Aggiungi riunione" per iniziare</div>`;
     return;
   }
-  // Group by month
+
   const groups={};
-  meetings.forEach(m=>{
+  allMeetings.forEach(m=>{
     const key=m.data?new Date(m.data).toLocaleDateString('it-IT',{month:'long',year:'numeric'}):'Senza data';
     if(!groups[key]) groups[key]=[];
     groups[key].push(m);
   });
-  const totalMin=meetings.reduce((s,m)=>s+(timeMap[m.durata]||60),0);
+
+  const totalMin=allMeetings.reduce((s,m)=>s+(timeMap[m.durata]||60),0);
   const th=Math.floor(totalMin/60),tm=totalMin%60;
-  el.innerHTML=`<div style="font-size:12px;color:var(--text3);margin-bottom:12px">${meetings.length} riunioni · ⏱ ${th}h${tm>0?` ${tm}m`:''} totali</div>`+
+
+  el.innerHTML=`<div style="font-size:12px;color:var(--text3);margin-bottom:12px">${allMeetings.length} riunioni · ⏱ ${th}h${tm>0?` ${tm}m`:''} totali</div>`+
   Object.entries(groups).map(([month,ms])=>{
     const mMin=ms.reduce((s,m)=>s+(timeMap[m.durata]||60),0);
     const mh=Math.floor(mMin/60),mm2=mMin%60;
@@ -1848,10 +1877,10 @@ function renderMeetingLog(){
       ${ms.map(m=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:10px;margin-bottom:5px">
         <span style="font-size:16px">📅</span>
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:500">${esc(m.nome)}</div>
+          <div style="font-size:13px;font-weight:500">${esc(m.nome.replace('📅 ',''))}</div>
           <div style="font-size:11px;color:var(--text3)">${m.data?new Date(m.data).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'}):''} · ⏱ ${m.durata}${m.partecipanti?` · 👥 ${esc(m.partecipanti)}`:''}</div>
         </div>
-        <button class="btn btn-sm btn-icon btn-danger" onclick="delMeeting('${m.id}')">✕</button>
+        ${!m.fromTask?`<button class="btn btn-sm btn-icon btn-danger" onclick="delMeeting('${m.id}')">✕</button>`:''}
       </div>`).join('')}
     </div>`;
   }).join('');
