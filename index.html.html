@@ -931,7 +931,7 @@ function renderAll(){
   if(currentRole==='admin'){
     renderAllProj(curProjFilter);
     renderScadenze();
-    Object.keys(RUOLI).forEach(r=>renderRuolo(r));
+    ['cda','mkt','rnd','b2b','sos'].forEach(r=>renderRuolo(r));
   }
   renderTaskList(curTaskFilter);
   renderLog();
@@ -1362,13 +1362,16 @@ function renderScadenze(){
 function renderRuolo(r){
   const prioOrd={critica:0,alta:1,media:2,bassa:3};
   const rProj=P.filter(p=>p.ruolo===r);
-  document.getElementById('proj-'+r).innerHTML=rProj.length?rProj.map(projCard).join(''):`<div class="empty"><div class="empty-icon">◈</div><div class="empty-t">Nessun progetto</div></div>`;
+  const projEl=document.getElementById('proj-'+r);
+  const tasksEl=document.getElementById('tasks-'+r);
+  if(!projEl||!tasksEl) return; // panel non esiste, salta
+  projEl.innerHTML=rProj.length?rProj.map(projCard).join(''):`<div class="empty"><div class="empty-icon">◈</div><div class="empty-t">Nessun progetto</div></div>`;
   const rTasks=T.filter(t=>t.ruolo===r&&!t.done).sort((a,b)=>{
     const pp=(prioOrd[a.priorita]||2)-(prioOrd[b.priorita]||2);
     if(pp!==0)return pp;
     return(a.dead||'').localeCompare(b.dead||'');
   });
-  document.getElementById('tasks-'+r).innerHTML=rTasks.length?`<div class="sh"><span class="sh-label">Task aperti</span><span class="sh-line"></span></div>`+rTasks.map(taskCard).join(''):'';
+  tasksEl.innerHTML=rTasks.length?`<div class="sh"><span class="sh-label">Task aperti</span><span class="sh-line"></span></div>`+rTasks.map(taskCard).join(''):'';
 }
 
 function projCard(p){
