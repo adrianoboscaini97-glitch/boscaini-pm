@@ -527,6 +527,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <div class="brief-greeting" id="greeting">Caricamento...</div>
       <div class="brief-date" id="briefDate"></div>
     </div>
+    <div id="fridayBanner" style="display:none;" class="friday-banner" onclick="sp('report')">
+      <div class="friday-banner-icon">📅</div>
+      <div class="friday-banner-text">
+        <div class="friday-banner-title">È venerdì — inserisci le riunioni della settimana!</div>
+        <div class="friday-banner-sub">Vai su Produttività → scrivi "Inserisci riunioni settimana" su Claude per importarle</div>
+      </div>
+      <div style="font-size:18px;color:var(--accent)">→</div>
+    </div>
     <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0 24px 24px;" id="briefContent">
       <div style="display:flex;gap:8px;flex-shrink:0;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
         <div class="search-bar" style="flex:1;margin-bottom:0;">
@@ -601,6 +609,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div id="dayChart" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"></div>
     <div class="sh"><span class="sh-label">Carico per ruolo</span><span class="sh-line"></span></div>
     <div id="ruoloLoad" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"></div>
+    <div class="sh"><span class="sh-label">Riunioni & Call</span><span class="sh-line"></span></div>
+    <div id="meetingLog" style="margin-bottom:20px;"></div>
+    <button class="btn btn-sm" onclick="openAddMeeting()" style="margin-bottom:20px">+ Aggiungi riunione</button>
     <div class="sh"><span class="sh-label">Recap mensile</span><span class="sh-line"></span></div>
     <div id="monthRecap" style="margin-bottom:20px;"></div>
   </div>
@@ -731,6 +742,31 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <button class="btn btn-accent" onclick="confirmImport()">✓ Importa selezionati</button>
   </div>
 </div>
+</div>
+
+<!-- MEETING MODAL -->
+<div class="time-modal-ov hidden" id="meetingModal">
+  <div class="time-modal" style="max-width:420px;text-align:left;">
+    <div class="time-modal-title">📅 Aggiungi riunione/call</div>
+    <div class="fl" style="margin-bottom:10px"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Nome evento</label><input class="fi" id="meetingNome" placeholder="Es. CDA, Call FiloBlu..."></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div class="fl" style="margin:0"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Data</label><input class="fi" type="date" id="meetingData"></div>
+      <div class="fl" style="margin:0"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Durata</label><select class="fs" id="meetingDurata">
+        <option value="15min">15 min</option>
+        <option value="30min">30 min</option>
+        <option value="1h" selected>1 ora</option>
+        <option value="2h">2 ore</option>
+        <option value="3h">3 ore</option>
+        <option value="mezza giornata">½ giornata</option>
+        <option value="giornata">Giornata</option>
+      </select></div>
+    </div>
+    <div class="fl" style="margin-bottom:12px"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Partecipanti (opzionale)</label><input class="fi" id="meetingPartecipanti" placeholder="Es. Maria, Franco, FiloBlu..."></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" onclick="closeMeetingModal()">Annulla</button>
+      <button class="btn btn-accent" onclick="saveMeeting()">✓ Salva</button>
+    </div>
+  </div>
 </div>
 
 <!-- NOTE VELOCE MODAL -->
@@ -965,6 +1001,9 @@ function renderAll(){
   document.getElementById('briefDate').textContent=ds2;
   const h=new Date().getHours();
   document.getElementById('greeting').textContent=(h<12?'Buongiorno':(h<18?'Buon pomeriggio':'Buonasera'))+'!';
+  // Mostra banner venerdì
+  const fridayBanner=document.getElementById('fridayBanner');
+  if(fridayBanner) fridayBanner.style.display=today.getDay()===5?'flex':'none';
 }
 
 function updateCounts(){
@@ -1626,7 +1665,7 @@ function sp(name){
     renderRuolo(r);
   }
   if(name==='report'){
-    loadActivityLog().then(()=>renderReport(reportFilter));
+    loadActivityLog().then(()=>{renderReport(reportFilter);renderMeetingLog();});
   }
   if(name==='completati')renderCompletati();
   loadAll();
@@ -1742,6 +1781,82 @@ function toggleTWithTracking(id){
   document.getElementById('confirmModalTask').textContent=t.nome;
   document.getElementById('confirmModal').classList.remove('hidden');
 }
+// ── RIUNIONI ─────────────────────────────────────────────────────────────
+let meetings = [];
+try { meetings = JSON.parse(localStorage.getItem('bpm_meetings')||'[]'); } catch(e){}
+
+function saveMeetings(){ localStorage.setItem('bpm_meetings', JSON.stringify(meetings)); }
+
+function openAddMeeting(){
+  document.getElementById('meetingNome').value='';
+  document.getElementById('meetingData').value=new Date().toISOString().split('T')[0];
+  document.getElementById('meetingDurata').value='1h';
+  document.getElementById('meetingPartecipanti').value='';
+  document.getElementById('meetingModal').classList.remove('hidden');
+}
+function closeMeetingModal(){
+  document.getElementById('meetingModal').classList.add('hidden');
+}
+function saveMeeting(){
+  const nome=document.getElementById('meetingNome').value.trim();
+  if(!nome){toast('Inserisci il nome della riunione');return;}
+  const m={
+    id:'m'+Date.now(),
+    nome,
+    data:document.getElementById('meetingData').value,
+    durata:document.getElementById('meetingDurata').value,
+    partecipanti:document.getElementById('meetingPartecipanti').value.trim(),
+    ts:new Date().toISOString()
+  };
+  meetings.unshift(m);
+  saveMeetings();
+  closeMeetingModal();
+  renderMeetingLog();
+  toast('📅 Riunione aggiunta!');
+}
+function delMeeting(id){
+  meetings=meetings.filter(m=>m.id!==id);
+  saveMeetings();
+  renderMeetingLog();
+}
+
+function renderMeetingLog(){
+  const el=document.getElementById('meetingLog');
+  if(!el) return;
+  const timeMap={'15min':15,'30min':30,'1h':60,'2h':120,'3h':180,'mezza giornata':240,'giornata':480};
+  if(!meetings.length){
+    el.innerHTML=`<div style="color:var(--text3);font-size:12px;padding:8px">Nessuna riunione registrata — clicca "+ Aggiungi riunione" per iniziare</div>`;
+    return;
+  }
+  // Group by month
+  const groups={};
+  meetings.forEach(m=>{
+    const key=m.data?new Date(m.data).toLocaleDateString('it-IT',{month:'long',year:'numeric'}):'Senza data';
+    if(!groups[key]) groups[key]=[];
+    groups[key].push(m);
+  });
+  const totalMin=meetings.reduce((s,m)=>s+(timeMap[m.durata]||60),0);
+  const th=Math.floor(totalMin/60),tm=totalMin%60;
+  el.innerHTML=`<div style="font-size:12px;color:var(--text3);margin-bottom:12px">${meetings.length} riunioni · ⏱ ${th}h${tm>0?` ${tm}m`:''} totali</div>`+
+  Object.entries(groups).map(([month,ms])=>{
+    const mMin=ms.reduce((s,m)=>s+(timeMap[m.durata]||60),0);
+    const mh=Math.floor(mMin/60),mm2=mMin%60;
+    return `<div style="margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3);letter-spacing:.5px;margin-bottom:6px;display:flex;justify-content:space-between">
+        <span>${month}</span><span>⏱ ${mh}h${mm2>0?` ${mm2}m`:''}</span>
+      </div>
+      ${ms.map(m=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:10px;margin-bottom:5px">
+        <span style="font-size:16px">📅</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">${esc(m.nome)}</div>
+          <div style="font-size:11px;color:var(--text3)">${m.data?new Date(m.data).toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'}):''} · ⏱ ${m.durata}${m.partecipanti?` · 👥 ${esc(m.partecipanti)}`:''}</div>
+        </div>
+        <button class="btn btn-sm btn-icon btn-danger" onclick="delMeeting('${m.id}')">✕</button>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
 // ── NOTE VELOCI ──────────────────────────────────────────────────────────
 let noteTaskId = null;
 function openNoteVeloce(id){
@@ -1958,8 +2073,8 @@ function renderReport(f){
         ${byCounts.map((c,i)=>`
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end">
             <div style="font-size:10px;color:var(--text3)">${c||''}</div>
-            <div style="width:100%;border-radius:4px 4px 0 0;height:${Math.round((c/maxBy)*44)+4}px;background:${i===bestIdx?'var(--accent)':c>0?'var(--bg5)':'var(--bg4)'}"></div>
-            <div style="font-size:9px;color:${i===bestIdx?'var(--accent)':'var(--text3)'};font-weight:${i===bestIdx?700:400}">${dayNames[i].slice(0,3)}</div>
+            <div style="width:100%;border-radius:4px 4px 0 0;height:${Math.round((c/maxBy)*44)+4}px;background:${i===bestIdx&&c>0?'var(--accent)':c>0?'#2a2a2a':'#1a1a1a'}"></div>
+            <div style="font-size:9px;color:${i===bestIdx&&c>0?'var(--accent)':'var(--text3)'};font-weight:${i===bestIdx&&c>0?700:400}">${dayNames[i].slice(0,3)}</div>
           </div>`).join('')}
       </div>`;
   }
