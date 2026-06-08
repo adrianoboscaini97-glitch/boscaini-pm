@@ -1967,8 +1967,8 @@ function renderReport(f){
   // Settimana corrente: dal lunedì di questa settimana
   const startOfWeek = new Date(now);
   const day = startOfWeek.getDay();
-  const diff = day === 0 ? -6 : 1 - day; // Monday
-  startOfWeek.setDate(startOfWeek.getDate() + diff);
+  const dayOffset = day === 0 ? -6 : 1 - day; // Monday
+  startOfWeek.setDate(startOfWeek.getDate() + dayOffset);
   startOfWeek.setHours(0,0,0,0);
 
   const filtered=activityLog.filter(a=>{
@@ -1984,6 +1984,10 @@ function renderReport(f){
   const timeStr=totalMin===0?'—':hrs>0?`${hrs}h${mins>0?` ${mins}m`:''}`:` ${mins}m`;
   const avgMin=completed.length>0?Math.round(totalMin/completed.length):0;
   const avgStr=avgMin===0?'—':avgMin>=60?`${Math.floor(avgMin/60)}h${avgMin%60>0?` ${avgMin%60}m`:''}`:` ${avgMin}m`;
+  const workDays=completed.length>0?new Set(completed.map(a=>new Date(a.ts).toLocaleDateString('it-IT'))).size:1;
+  const avgDayMin=Math.round(totalMin/Math.max(workDays,1));
+  const adh=Math.floor(avgDayMin/60),adm=avgDayMin%60;
+  const avgDailyStr=avgDayMin===0?'--':adh>0?adh+'h'+(adm>0?' '+adm+'m':''):adm+'m';
 
   // On time vs late
   const onTime=completed.filter(a=>!a.overdue).length;
@@ -1993,10 +1997,10 @@ function renderReport(f){
   // Week compare
   const thisWeek=activityLog.filter(a=>new Date(a.ts)>=weekAgo&&a.type==='completed');
   const prevWeek=activityLog.filter(a=>{const d=new Date(a.ts);return d>=prevWeekStart&&d<weekAgo&&a.type==='completed';});
-  const diff=thisWeek.length-prevWeek.length;
-  const trendPct=prevWeek.length>0?Math.round(Math.abs(diff)/prevWeek.length*100):null;
-  const trendDir=diff>0?'up':diff<0?'down':'neutral';
-  const trendStr=trendPct!==null?(diff>0?`↑ +${trendPct}% vs sett. scorsa`:diff<0?`↓ -${trendPct}% vs sett. scorsa`:'→ Stabile'):'';
+  const weekDiff=thisWeek.length-prevWeek.length;
+  const trendPct=prevWeek.length>0?Math.round(Math.abs(weekDiff)/prevWeek.length*100):null;
+  const trendDir=weekDiff>0?'up':weekDiff<0?'down':'neutral';
+  const trendStr=trendPct!==null?(weekDiff>0?`↑ +${trendPct}% vs sett. scorsa`:weekDiff<0?`↓ -${trendPct}% vs sett. scorsa`:'→ Stabile'):'';
 
   // KPI cards
   const kpiEl=document.getElementById('kpiGrid');
