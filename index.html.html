@@ -611,9 +611,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div id="ruoloLoad" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"></div>
     <div class="sh"><span class="sh-label">Giorno più produttivo</span><span class="sh-line"></span></div>
     <div id="bestDay" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"></div>
-    <div class="sh"><span class="sh-label">Riunioni & Call</span><span class="sh-line"></span></div>
-    <div id="meetingLog" style="margin-bottom:20px;"></div>
-    <button class="btn btn-sm" onclick="openAddMeeting()" style="margin-bottom:20px">+ Aggiungi riunione</button>
+
     <div class="sh"><span class="sh-label">Recap mensile</span><span class="sh-line"></span></div>
     <div id="monthRecap" style="margin-bottom:20px;"></div>
   </div>
@@ -1667,7 +1665,7 @@ function sp(name){
     renderRuolo(r);
   }
   if(name==='report'){
-    loadActivityLog().then(()=>{renderReport(reportFilter);renderMeetingLog();});
+    loadActivityLog().then(()=>renderReport(reportFilter));
   }
   if(name==='completati')renderCompletati();
   loadAll();
