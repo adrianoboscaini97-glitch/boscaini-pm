@@ -528,10 +528,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <div class="brief-date" id="briefDate"></div>
     </div>
     <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0 24px 24px;" id="briefContent">
-      <div class="search-bar" id="searchBrief" style="flex-shrink:0;margin-bottom:12px;">
-        <span class="search-icon">🔍</span>
-        <input class="search-input" placeholder="Cerca tra tutti i task..." oninput="searchPanoramica(this.value)" id="searchBriefInput" style="font-size:15px;">
-        <button class="search-clear" id="panSearchClear" onclick="searchPanoramica('');document.getElementById('searchBriefInput').value='';this.classList.remove('show')">✕</button>
+      <div style="display:flex;gap:8px;flex-shrink:0;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+        <div class="search-bar" style="flex:1;margin-bottom:0;">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" placeholder="Cerca tra tutti i task..." oninput="searchPanoramica(this.value)" id="searchBriefInput" style="font-size:15px;">
+          <button class="search-clear" id="panSearchClear" onclick="searchPanoramica('');document.getElementById('searchBriefInput').value='';this.classList.remove('show')">✕</button>
+        </div>
+        <button class="fbtn" id="filterAttesaBtn" onclick="toggleAttesaFilter()" style="flex-shrink:0;white-space:nowrap">⏳ In attesa</button>
       </div>
       <div id="panoramicaColumns" style="flex:1;overflow-x:auto;overflow-y:hidden;display:flex;gap:14px;padding-bottom:8px;"></div>
     </div>
@@ -600,8 +603,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div id="ruoloLoad" style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"></div>
     <div class="sh"><span class="sh-label">Recap mensile</span><span class="sh-line"></span></div>
     <div id="monthRecap" style="margin-bottom:20px;"></div>
-    <div class="sh"><span class="sh-label">Attività recenti</span><span class="sh-line"></span></div>
-    <div id="reportLog"></div>
   </div>
 
   <div class="panel" id="panel-completati">
@@ -677,6 +678,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <option value="mkt-shooting">MKT · Shooting</option>
   <option value="rnd">R&D</option>
   <option value="b2b">B2B</option>
+  <option value="b2b-gianluca">B2B · Gianluca</option>
   <option value="sos">Sostenibilità</option>
 </select></div>
       <div class="fl"><label>Progetto</label><select class="fs" id="t_proj"></select></div>
@@ -731,6 +733,19 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 </div>
 </div>
 
+<!-- NOTE VELOCE MODAL -->
+<div class="time-modal-ov hidden" id="noteModal">
+  <div class="time-modal" style="max-width:400px;text-align:left;">
+    <div class="time-modal-title">📝 Nota veloce</div>
+    <div class="time-modal-task" id="noteModalTask" style="margin-bottom:10px"></div>
+    <textarea class="ft" id="noteInput" placeholder="Scrivi una nota rapida..." style="min-height:80px;margin-bottom:12px;width:100%"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" onclick="closeNoteModal()">Annulla</button>
+      <button class="btn btn-accent" onclick="saveNoteVeloce()">✓ Salva</button>
+    </div>
+  </div>
+</div>
+
 <!-- CONFIRM COMPLETE MODAL -->
 <div class="confirm-modal-ov hidden" id="confirmModal">
   <div class="confirm-modal">
@@ -780,6 +795,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
           <option value="mkt-shooting">📸 MKT · Shooting</option>
           <option value="rnd">🔬 R&D</option>
           <option value="b2b">🤝 B2B</option>
+          <option value="b2b-gianluca">🤝 B2B · Gianluca</option>
           <option value="sos">🌱 Sostenibilità</option>
         </select></div>
         <div class="fl"><label>Priorità</label><select class="fs" id="linkNewPrio">
@@ -837,6 +853,7 @@ const RUOLI = {
   mkt:          {label:'Marketing',        color:'#ff6b4a', tagCls:'tag-ruolo-mkt', emoji:'📣'},
   rnd:          {label:'R&D',              color:'#4da6ff', tagCls:'tag-ruolo-rnd', emoji:'🔬'},
   b2b:          {label:'B2B',              color:'#ff9f1c', tagCls:'tag-ruolo-b2b', emoji:'🤝'},
+  'b2b-gianluca':{label:'B2B · Gianluca', color:'#ff9f1c', tagCls:'tag-ruolo-b2b', emoji:'🤝'},
   sos:          {label:'Sostenibilità',    color:'#00e5a0', tagCls:'tag-ruolo-sic', emoji:'🌱'},
   'mkt-grafica':    {label:'MKT · Grafica',     color:'#ff6b4a', tagCls:'tag-ruolo-mkt', emoji:'🎨'},
   'mkt-ooh':        {label:'MKT · OOH',          color:'#ff6b4a', tagCls:'tag-ruolo-mkt', emoji:'🪧'},
@@ -965,6 +982,14 @@ function updateCounts(){
   }
 }
 
+let filterAttesa = false;
+function toggleAttesaFilter(){
+  filterAttesa = !filterAttesa;
+  const btn = document.getElementById('filterAttesaBtn');
+  if(btn) btn.classList.toggle('on', filterAttesa);
+  applyPanoramicaSearch();
+}
+
 function searchPanoramica(q){
   panoramicaSearchQuery = q;
   const clearBtn = document.getElementById('panSearchClear');
@@ -976,9 +1001,11 @@ function applyPanoramicaSearch(){
   const q = panoramicaSearchQuery;
   document.querySelectorAll('.pan-task').forEach(el=>{
     const name = el.querySelector('.pan-task-name')?.textContent.toLowerCase()||'';
-    el.style.display = (!q || name.includes(q.toLowerCase())) ? '' : 'none';
+    const hasAttesa = el.querySelector('.tag') && [...el.querySelectorAll('.tag')].some(t=>t.textContent.includes('In attesa'));
+    const matchQ = !q || name.includes(q.toLowerCase());
+    const matchA = !filterAttesa || hasAttesa;
+    el.style.display = (matchQ && matchA) ? '' : 'none';
   });
-  // Keep search input in sync
   const inp = document.getElementById('searchBriefInput');
   if(inp && inp.value !== q) inp.value = q;
 }
@@ -1022,13 +1049,19 @@ function renderPanoramica(){
   const prioEmoji={critica:'🔴',alta:'🟡',media:'🔵',bassa:'⚪'};
   const prioLabel={critica:'CRITICA',alta:'ALTA',media:'MEDIA',bassa:'BASSA'};
 
+  // Detect "in attesa" tasks
+  function isInAttesa(t){
+    const kw=['attendi','attendi ','in attesa','aspetta','aspettare','wait'];
+    return kw.some(k=>t.nome.toLowerCase().includes(k));
+  }
+
   function renderTask(t, indent=false){
     const d=dScore(t.dead);
     const deadColor=d<0?'var(--red)':d===0?'var(--amber)':d<=3?'var(--rnd)':'var(--text3)';
     const deadLbl=!t.dead?'':d<0?'⚠ Scaduto':d===0?'Oggi':d===1?'Domani':d+'gg';
     const proj=P.find(p=>p.id===t.proj_id);
-    // Task completato ma gruppo non ancora chiuso: sbarrato, non cliccabile
     const doneInGroup = t.done;
+    const attesa = isInAttesa(t);
     return `<div class="pan-task prio-${t.priorita} ${doneInGroup?'done':''}" data-id="${t.id}" 
       style="${indent?'margin-left:12px;':''}${doneInGroup?'opacity:0.5;pointer-events:none;':''}"
       onclick="${doneInGroup?'':"toggleTWithTracking('"+ t.id +"')"}">
@@ -1041,6 +1074,7 @@ function renderPanoramica(){
       </div>
       ${currentRole==='admin'?`<div class="pan-task-actions" onclick="event.stopPropagation()">
         <button class="link-btn" onclick="openLinkModal('${t.id}');event.stopPropagation()">🔗</button>
+        <button class="link-btn" onclick="openNoteVeloce('${t.id}');event.stopPropagation()" title="Nota veloce">📝</button>
         <button class="btn btn-sm btn-icon" onclick="editT('${t.id}');event.stopPropagation()" style="width:22px;height:22px;font-size:11px">✎</button>
         <button class="btn btn-sm btn-icon btn-danger" onclick="delT('${t.id}');event.stopPropagation()" style="width:22px;height:22px;font-size:11px">✕</button>
       </div>`:''}
@@ -1708,6 +1742,32 @@ function toggleTWithTracking(id){
   document.getElementById('confirmModalTask').textContent=t.nome;
   document.getElementById('confirmModal').classList.remove('hidden');
 }
+// ── NOTE VELOCI ──────────────────────────────────────────────────────────
+let noteTaskId = null;
+function openNoteVeloce(id){
+  noteTaskId = id;
+  const t = T.find(x=>x.id===id);
+  document.getElementById('noteModalTask').textContent = t?.nome||'';
+  document.getElementById('noteInput').value = t?.descrizione||'';
+  document.getElementById('noteModal').classList.remove('hidden');
+}
+function closeNoteModal(){
+  document.getElementById('noteModal').classList.add('hidden');
+  noteTaskId = null;
+}
+async function saveNoteVeloce(){
+  const nota = document.getElementById('noteInput').value.trim();
+  if(!noteTaskId) return;
+  const t = T.find(x=>x.id===noteTaskId);
+  if(t){
+    t.descrizione = nota;
+    await sb.from('tasks').update({descrizione:nota}).eq('id',noteTaskId);
+    toast('📝 Nota salvata!');
+  }
+  closeNoteModal();
+  renderPanoramica();
+}
+
 function cancelConfirm(){
   document.getElementById('confirmModal').classList.add('hidden');
   pendingConfirmId=null;
@@ -1872,6 +1932,38 @@ function renderReport(f){
     }).join('');
   }
 
+  // Best day of week
+  const bestDayEl = document.getElementById('bestDay');
+  if(bestDayEl){
+    const dayNames=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+    const byCounts=Array(7).fill(0);
+    activityLog.filter(a=>a.type==='completed').forEach(a=>{
+      const d=new Date(a.ts);
+      byCounts[d.getDay()]++;
+    });
+    const maxBy=Math.max(...byCounts,1);
+    const bestIdx=byCounts.indexOf(Math.max(...byCounts));
+    const avgPerDay=byCounts.map((c,i)=>({day:dayNames[i],count:c})).filter(d=>d.day!=='Domenica'&&d.day!=='Sabato');
+    bestDayEl.innerHTML=`
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-size:24px;font-weight:800;color:var(--accent)">${dayNames[bestIdx]}</div>
+          <div style="font-size:12px;color:var(--text3)">giorno più produttivo · ${byCounts[bestIdx]} task completati</div>
+        </div>
+        <div style="flex:1;text-align:right;font-size:12px;color:var(--text3)">
+          Media lun-ven: <span style="color:var(--text2);font-weight:600">${(avgPerDay.reduce((s,d)=>s+d.count,0)/Math.max(avgPerDay.filter(d=>d.count>0).length,1)).toFixed(1)} task/giorno</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:flex-end;height:60px;">
+        ${byCounts.map((c,i)=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end">
+            <div style="font-size:10px;color:var(--text3)">${c||''}</div>
+            <div style="width:100%;border-radius:4px 4px 0 0;height:${Math.round((c/maxBy)*44)+4}px;background:${i===bestIdx?'var(--accent)':c>0?'var(--bg5)':'var(--bg4)'}"></div>
+            <div style="font-size:9px;color:${i===bestIdx?'var(--accent)':'var(--text3)'};font-weight:${i===bestIdx?700:400}">${dayNames[i].slice(0,3)}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+
   // Month recap
   const monthEl=document.getElementById('monthRecap');
   if(monthEl){
@@ -1900,15 +1992,6 @@ function renderReport(f){
     }
   }
 
-  // Activity log
-  const logEl=document.getElementById('reportLog');
-  if(logEl){
-    if(!completed.length){ logEl.innerHTML=`<div class="empty"><div class="empty-icon">📊</div><div class="empty-t">Nessuna attività registrata</div></div>`; }
-    else{ logEl.innerHTML=completed.map(a=>{
-      const r=RUOLI[a.ruolo];
-      return `<div class="log-item"><div class="log-item-dot" style="background:${r?.color||'var(--accent)'}"></div><div class="log-item-body"><div class="log-item-name">✓ ${esc(a.taskName)}</div><div class="log-item-meta"><span>${a.time} · ${a.date}</span>${a.duration?`<span>⏱ ${esc(a.duration)}</span>`:''} ${r?`<span>${r.emoji} ${r.label}</span>`:''}</div></div></div>`;
-    }).join('');}
-  }
 }
 
 
